@@ -11,10 +11,10 @@ body, html {
 }
 body {
     display: flex;
+    background-color: #96d228;
     justify-content: center;
     align-items: center;
     padding-top: 20px;
-    background: #8bb915 url(../Content/img/Fondo-Cobefar.png);
     background-position: center center;
     background-attachment: fixed;
     -webkit-background-size: cover;
