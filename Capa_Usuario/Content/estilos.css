@@ -51,7 +51,7 @@ html, body {
 body {
     display: flex;
     flex-direction: column;
-    background-image: url('/Content/img/Fondo-Cobefar.png');
+    background-color: #96d228;
     background-position: center center;
     background-attachment: fixed;
 }
@@ -143,7 +143,7 @@ footer {
 }
 
     .menu a {
-        color: darkgreen;
+        color: #96d228;
         font-weight: 600;
         text-decoration: none;
         font-size: 18px;
@@ -151,7 +151,7 @@ footer {
     }
 
         .menu a:hover {
-            color: #009879;
+            color: #7fb31f;
         }
 
     .menu p {
@@ -179,9 +179,11 @@ footer {
     color: white;
     font-size: 23px;
 }
-
+.bg-azul {
+    background-color: #002369
+}
 .bg-cobefar-degradado-1 {
-    background: linear-gradient(to right, #000 0%,#009879 100%)
+    background-color: #002369;
 }
 
 .border-cabecera-seccion {
@@ -318,7 +320,7 @@ footer {
 }
 
 .encabezado-verde th {
-    background: linear-gradient(to right, #004d40 0%, #009879 100%) !important;
+    background-color: #002369;
     color: #fff !important;
     text-shadow: 1px 1px 2px rgba(0,0,0,0.4);
 }
