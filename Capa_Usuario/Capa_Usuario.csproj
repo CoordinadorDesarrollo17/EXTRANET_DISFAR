@@ -222,6 +222,7 @@
     <None Include="Scripts\jquery-1.10.2.intellisense.js" />
     <Content Include="Imagenes\fondo-login.png" />
     <Content Include="Imagenes\logo.jpg" />
+    <Content Include="Imagenes\logo.png" />
     <Content Include="Scripts\alertify.js" />
     <Content Include="Scripts\alertify.min.js" />
     <Content Include="Scripts\jquery-1.10.2.js" />
