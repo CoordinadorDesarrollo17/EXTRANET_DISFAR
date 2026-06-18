@@ -1,0 +1,135 @@
+﻿@model IEnumerable<Capa_Entidad.Transacciones_ENT.TablasSql.DetFactura_E>
+@using Capa_Entidad.Transacciones_ENT.TablasSql
+@using Capa_Entidad.Inventario_ENT.TablasSql
+@{
+    ViewBag.Title = "DetalleComprobante";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<style>
+    #detalle {
+        max-width: 120%;
+        background-color: rgba(139, 185, 21, 0.8);
+        padding-bottom: 2%;
+    }
+    #subdetalle {
+        display: flex;
+        justify-content: space-between;
+        flex-wrap: wrap;
+        max-width: 90%;
+        background-color: rgb(220, 220, 220, 1);
+        /* background-color: rgb(35, 194, 94, 0.6);*/
+        margin: 1% 5% 1% 5%;
+    }
+        #subdetalle td {
+            font-size: 13px;
+        }
+    a {
+        color: black;
+        text-decoration: none;
+    }
+</style>
+<a style="float:left;" href="@Url.Action("GestionComprobantes", "Home")" class="btn btn-secondary">
+    <i class="icon-arrow-bold-left"></i>
+    <span>Regresar</span>
+</a>
+<br />
+<div id="detalle" class="container-fluid">
+    <table style="margin-top:20px;padding:10px">
+        <tr>
+            <td class="col-2" style="font-weight: 700; color: white; text-shadow: 2px 2px 1px rgba(0,0,0,0.7);">
+                @Html.DisplayName("Serie y Numero")
+                <label style="font-weight:300;">
+                    @ViewBag.NroComprobante
+                </label>
+            </td>
+        </tr>
+        <tr>
+            <td style="font-weight: 700; color: white; text-shadow: 2px 2px 1px rgba(0,0,0,0.7); ">
+                @Html.DisplayName("Fecha de contabilizacion")
+                <label style="font-weight:300;">
+                    @ViewBag.Fecha
+                </label>
+            </td>
+        </tr>
+    </table>
+    <div id="subdetalle" class="container-fluid">
+        <table class="table table-responsive table-hover">
+            <tr>
+                <td style="font-weight: 800;">
+                    @Html.DisplayName("Codigo")
+                </td>
+                <td style="font-weight: 800;">
+                    @Html.DisplayName("Descripcion")
+                </td>
+                <td style="font-weight: 800;">
+                    @Html.DisplayName("Lote")
+                </td>
+                <td style="font-weight: 800;">
+                    @Html.DisplayName("Protocolo")
+                </td>
+                <td style="font-weight: 800;">
+                    @Html.DisplayName("Espec Tecnica")
+                </td>
+                <td style="font-weight: 800;">
+                    @Html.DisplayName("Reg Sanitario")
+                </td>
+            </tr>
+            @foreach (var obj in Model)
+            {
+                var ItemCodeOriginal = obj.ItemCode;
+                bool caracterEspecial = obj.ItemCode.Contains("&");
+                if (caracterEspecial)
+                {
+                    obj.ItemCode = obj.ItemCode.Replace("&", "ampersand");
+                }
+                <tr>
+                    <td style="text-align:left;">@ItemCodeOriginal.Substring(0, 4)</td>
+                    <td style="text-align:left;">@obj.ItemName</td>
+                    <td style="text-align:left;">@obj.BatchNum</td>
+                    <td>
+                        @if (obj.Protocolo != null && obj.Protocolo.RutaArchivo != null && obj.ExistePt(obj.Protocolo.RutaArchivo))
+                        {
+                            <a href="@Url.Action("DocumentoProtocolo", "Home", new { id = obj.ItemCode,Lote = obj.BatchNum })" target="_blank">
+                                <i class="icon-download"></i>
+                            </a>
+                        }
+                    </td>
+                    <td>
+                        @if (obj.ET != null && obj.ET.RutaArchivo != null && obj.ExisteEt(obj.ET.RutaArchivo))
+                        {
+                            //if ((obj.RegistroSanitario != null && obj.existeRs(obj.RegistroSanitario.RutaArchivo))
+                            //    && (obj.Protocolo != null && obj.existePt(obj.Protocolo.RutaArchivo)) == false)
+                            //{
+                            <a href="@Url.Action("DocumentoEspTecnica", "Home", new { id = obj.ItemCode  })" target="_blank">
+                                <i class="icon-download"></i>
+                            </a>
+                            //}
+                        }
+                    </td>
+                    <td>
+                        @if (obj.RegistroSanitario != null && obj.RegistroSanitario.RutaArchivo != null && obj.ExisteRs(obj.RegistroSanitario.RutaArchivo))
+                        {
+                            <a href="@Url.Action("DocumentoRegSanit", "Home", new { id = obj.RegistroSanitario.MnfSerial })" target="_blank">
+                                <i class="icon-download"></i>
+                            </a>
+                        }
+                    </td>
+                </tr>
+            }
+        </table>
+    </div>
+    <div>
+        @for (int i = 0; i < (int)ViewBag.npags; i++)
+        {
+            if (i == (int)ViewBag.p)
+            {@Html.ActionLink((i + 1).ToString(), "DetalleComprobante", "Home",
+                             new { p = i }, new { @class = "btn btn-secondary" })
+        }
+        else
+        {@Html.ActionLink((i + 1).ToString(), "DetalleComprobante", "Home",
+                     new { p = i }, new { @class = "btn btn-default" })
+    }
+}
+    </div>
+    <h6 style="float:left; color:white">Total: @ViewBag.cantidad registro(s) </h6>
+</div>

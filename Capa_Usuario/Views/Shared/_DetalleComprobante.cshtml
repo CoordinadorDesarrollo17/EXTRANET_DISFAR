@@ -1,0 +1,88 @@
+﻿@model IEnumerable<Capa_Entidad.Transacciones_ENT.TablasSql.DetFactura_E>
+@using Capa_Entidad.Transacciones_ENT.TablasSql
+@using Capa_Entidad.Inventario_ENT.TablasSql
+
+<div class="card">
+    <div class="card-header bg-success text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">Datos</h5>
+        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+    </div>
+    <div class="card-body">
+        <p class="mb-2">
+            <strong>Número de Factura:</strong> @ViewBag.NroComprobante
+        </p>
+        <p>
+            <strong>Fecha:</strong> @ViewBag.Fecha
+        </p>
+
+        <table id="tablaDetalleComprobante" class="table table-hover" style="width:100%">
+            <thead class="encabezado-verde text-dark">
+                <tr>
+                    <th class="text-center">Código</th>
+                    <th class="text-center">Descripción</th>
+                    <th class="text-center">Lote</th>
+                    <th class="text-center">Protocolo</th>
+                    <th class="text-center">Espec Técnica</th>
+                    <th class="text-center">Reg Sanitario</th>
+                </tr>
+            </thead>
+            <tbody>
+                @if (Model != null && Model.Any())
+                {
+                    foreach (var obj in Model)
+                    {
+                        var ItemCodeOriginal = obj.ItemCode;
+                        bool caracterEspecial = obj.ItemCode.Contains("&");
+                        if (caracterEspecial)
+                        {
+                            obj.ItemCode = obj.ItemCode.Replace("&", "ampersand");
+                        }
+                        <tr>
+                            <td class="text-center">@ItemCodeOriginal.Substring(0, 4)</td>
+                            <td class="text-start">@obj.ItemName</td>
+                            <td class="text-center">@obj.BatchNum</td>
+                            <td class="text-center">
+                                @if (obj.Protocolo?.RutaArchivo != null && obj.ExistePt(obj.Protocolo.RutaArchivo))
+                                {
+                                    <a href="@Url.Action("DocumentoProtocolo", "Documentos", new { id = obj.ItemCode, Lote = obj.BatchNum })"
+                                       target="_blank"
+                                       class="btn btn-sm btn-outline-success rounded-pill"
+                                       data-bs-toggle="tooltip" title="Descargar Protocolo">
+                                        <i class="bi bi-download"></i> 
+                                    </a>
+                                }
+                            </td>
+                            <td class="text-center">
+                                @if (obj.ET?.RutaArchivo != null && obj.ExisteEt(obj.ET.RutaArchivo))
+                                {
+                                    <a href="@Url.Action("DocumentoEspTecnica", "Documentos", new { id = obj.ItemCode })"
+                                       target="_blank"
+                                       class="btn btn-sm btn-outline-primary rounded-pill"
+                                       data-bs-toggle="tooltip" title="Descargar Especificación Técnica">
+                                        <i class="bi bi-download"></i> 
+                                    </a>
+                                }
+                            </td>
+                            <td class="text-center">
+                                @if (obj.RegistroSanitario?.RutaArchivo != null && obj.ExisteRs(obj.RegistroSanitario.RutaArchivo))
+                                {
+                                    <a href="@Url.Action("DocumentoRegSanit", "Documentos", new { id = obj.RegistroSanitario.MnfSerial.Trim() })"
+                                       target="_blank"
+                                       class="btn btn-sm btn-outline-danger rounded-pill"
+                                       data-bs-toggle="tooltip" title="Descargar Registro Sanitario">
+                                        <i class="bi bi-download"></i> 
+                                    </a>
+                                }
+                            </td>
+
+                        </tr>
+                    }
+                }
+            </tbody>
+        </table>
+    </div>
+</div>
+
+
+
+

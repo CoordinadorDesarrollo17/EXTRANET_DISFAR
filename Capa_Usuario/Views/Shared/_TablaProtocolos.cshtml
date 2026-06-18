@@ -1,0 +1,68 @@
+﻿@model List<Capa_Entidad.Inventario_ENT.TablasSql.Protocolos_E>
+
+<table id="tablaProtocolos" class="table table-hover">
+    <thead class="encabezado-verde text-center">
+        <tr>
+            <th class="text-center" style="min-width: 120px;">Codigo</th>
+            <th class="text-start" style="min-width: 180px;">Descripcion</th>
+            <th class="text-center" style="min-width: 100px;">Lote</th>
+            <th class="text-center" style="min-width: 120px;">Usuario</th>
+            <th class="text-center" style="min-width: 140px;">Fecha Carga</th>
+            <th class="text-center" style="min-width: 200px;">Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model != null && Model.Any())
+        {
+            foreach (var p in Model)
+            {
+                <tr>
+                    <td class="text-center">@p.ItemCode</td>
+                    <td class="text-start">@p.ItemName</td>
+                    <td class="text-center">@p.DistNumber</td>
+                    <td class="text-center">@p.OpCarga</td>
+                    <td class="text-center">@p.TiempoCarga.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td class="text-center">
+                        <div class="d-flex justify-content-center gap-2 flex-wrap">
+                            @if (!string.IsNullOrWhiteSpace(p.RutaArchivo))
+                            {
+                                <a href="javascript:void(0);"
+                                   class="btn btn-sm btn-outline-primary"
+                                   onclick="verPDF('@Url.Action("DocumentoProtocoloPDF", "Documentos", new { id = p.ItemCode, lote = p.DistNumber })')">
+                                    <i class="bi bi-eye"></i> Ver
+                                </a>
+                            }
+                            else
+                            {
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-secondary"
+                                        disabled
+                                        title="No existe documento cargado">
+                                    <i class="bi bi-eye-slash"></i> Ver
+                                </button>
+                            }
+
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-danger"
+                                    onclick="eliminarProtocolo('@p.ItemCode', '@p.DistNumber',this)">
+                                <i class="bi bi-trash"></i> Eliminar
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="6" class="text-center text-muted py-4">
+                    <i class="bi bi-inbox"></i> No se encontraron protocolos con los criterios de búsqueda.
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+
+
+
+

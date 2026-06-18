@@ -1,0 +1,147 @@
+﻿@model IEnumerable<Capa_Entidad.Inventario_ENT.TablasSql.LotesRegistroSanitario_E>
+@using Capa_Entidad.Inventario_ENT.TablasSql
+@{
+    ViewBag.Title = "GestionDocumentos";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var f = (Capa_Entidad.Inventario_ENT.TablasSql.LotesRegistroSanitario_E)ViewBag.fil;
+}
+<style>
+    table a {
+        color: black;
+        text-decoration: none;
+    }
+        table a:hover {
+            color: red;
+            text-decoration: none;
+        }
+    table {
+        border-spacing: 150px;
+    }
+    td {
+        padding: 15px;
+        font-size: 12px;
+        font-weight: 500;
+    }
+    th {
+        font-size: 14px;
+    }
+</style>
+<script>
+    $(document).ready(function () { });
+    function filtrar() {
+        var object = $("#frm").serialize();
+        $(location).attr('href', "/Home/GestionDocumentos?" + object);
+    }
+</script>
+<a style="float:left;" href="@Url.Action("SesionUsuario", "Home")" class="btn btn-secondary">
+    <i class="icon-arrow-bold-left"></i>
+    <span>Regresar</span>
+</a>
+<br />
+<div id="section">
+    <div class="documentos">
+        <a href="@Url.Action("GestionProtocolo", "Home")">
+            <i class="icon-home1"></i>
+            <span>Gestion de Protocolos</span>
+        </a>
+    </div>
+    <div class="documentos">
+        <a href="@Url.Action("GestionRegistroSanitario", "Home")">
+            <i class="icon-home1"></i>
+            <span>Gestion de Reg. Sanitarios</span>
+        </a>
+    </div>
+    <div class="documentos">
+        <a href="@Url.Action("GestionEspecificacionTecnica", "Home")">
+            <i class="icon-home1"></i>
+            <span>Gestion de Esp. Técnica</span>
+        </a>
+    </div>
+</div>
+<form name="frm" id="frm" style="margin-top:5%;">
+    <div class="container h-100" style="background-color: rgb(220, 220, 220, 1)">
+        <table class="table table-hover table-sm container-fluid  table-responsive">
+            <tr>
+                <th>
+                    Codigo
+                    <input class="form-control" type="text" name="ItemCode" style="font-size: 12px; height: 25px" onchange="filtrar();" value="@ViewBag.fil.ItemCode" />
+                </th>
+                <th>
+                    Descripcion
+                    <input type="text" class="form-control" name="ItemName" style="font-size:12px; height:25px" onchange="filtrar();" value="@ViewBag.fil.ItemName" />
+                </th>
+                <th>
+                    Lote
+                    <input type="text" class="form-control" name="DistNumber" style="font-size:12px; height:25px" onchange="filtrar();" value="@ViewBag.fil.DistNumber" />
+                </th>
+                <th>
+                    F.v.
+                    <input type="date" class="form-control" name="ExpDate" style="font-size:12px; height:25px" onchange="filtrar();" value="@f.ExpDate" />
+                </th>
+                <th>
+                    NroRegSa
+                </th>
+                <th>R.S.</th>
+                <th>E.T.</th>
+                <th>P.T.</th>
+            </tr>
+            @foreach (var item in Model)
+            {
+                <tr>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.ItemCode)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.ItemName)
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.DistNumber)
+                    </td>
+                    <td>
+                        @item.ExpDate
+                    </td>
+                    <td>
+                        @Html.DisplayFor(modelItem => item.MnfSerial)
+                    </td>
+                    <td>
+                        @if (item.MnfSerial != null && item.ExistRutaRs)
+                        {
+                            <a href="@Url.Action("DocumentoRegSanit", "Home", new { id = item.MnfSerial })" target="_blank">
+                                <i class="icon-download"></i>
+                            </a>
+                        }
+                        else { }
+                    </td>
+                    <td>
+                        @if (item.ItemCode != null && item.ExistRutaEt)
+                        {
+                            bool caracterEspecial = item.ItemCode.Contains("&");
+                            if (caracterEspecial)
+                            {
+                                item.ItemCode = item.ItemCode.Replace("&", "ampersand");
+                            }
+                            <a href="@Url.Action("DocumentoEspTecnica", "Home", new { id = item.ItemCode })" target="_blank">
+                                <i class="icon-download"></i>
+                            </a>
+                        }
+                        else { }
+                    </td>
+                    <td>
+                        @if (item.DistNumber != null && item.ItemCode != null && item.ExistRutaPt)
+                        {
+                            bool caracterEspecial = item.ItemCode.Contains("&");
+                            if (caracterEspecial)
+                            {
+                                item.ItemCode = item.ItemCode.Replace("&", "ampersand");
+                            }
+                            <a href="@Url.Action("DocumentoProtocolo", "Home", new { id = item.ItemCode , Lote = item.DistNumber})" target="_blank">
+                                <i class="icon-download"></i>
+                            </a>
+                        }
+                        else { }
+                    </td>
+                </tr>
+            }
+        </table>
+    </div>
+</form>

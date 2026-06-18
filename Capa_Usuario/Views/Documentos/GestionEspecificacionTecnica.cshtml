@@ -1,0 +1,816 @@
+﻿@model List<Capa_Entidad.Inventario_ENT.TablasSql.EspecificacionesTecnicas_E>
+@{
+    ViewBag.Title = "Gestion de Especificación Tecnica";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<style>
+    table {
+        text-align: center;
+    }
+
+    td {
+        padding: 10px;
+        font-size: 14px;
+    }
+
+    /* Estilo para botón deshabilitado (sin PDF) */
+    .btn-outline-secondary:disabled {
+        cursor: not-allowed !important;
+        opacity: 0.6;
+        background-color: #f8f9fa;
+        border-color: #dee2e6;
+        color: #6c757d;
+    }
+
+    .btn-outline-secondary:disabled:hover {
+        background-color: #f8f9fa;
+        border-color: #dee2e6;
+        color: #6c757d;
+    }
+    .ts-dropdown {
+        z-index: 2000 !important;
+    }
+
+    .mi-item-lista {
+        display: flex;
+        justify-content: space-between;
+        padding: 8px;
+    }
+
+    .mi-codigo {
+        font-weight: bold;
+        color: #2563eb;
+        margin-right: 10px;
+    }
+
+    .mi-nombre {
+        color: #6b7280;
+        font-size: 0.9em;
+    }
+</style>
+
+<br />
+<div class="row">
+    <div class="col-lg-12 pt-4">
+        <div class="border-cabecera-seccion bg-cobefar-degradado-1 pb-2">
+            <div class="row px-3 pt-3"><h3 class="titulo-seccion">@ViewBag.Title.ToUpper()</h3></div>
+            <div class="row px-3 pt-3">
+                <div class="col-lg-12">
+                    <div class="d-flex flex-wrap align-items-start gap-2">
+                        <a style="float:left;" href="@Url.Action("GestionDocumentos", "Documentos")" class="btn btn-secondary">
+                            <i class="icon-arrow-bold-left"></i>
+                            <span>Regresar</span>
+                        </a>
+                        <button type="button" class="btn btn-primary" onclick="abrirModalEspTecnica()">
+                            <i class="bi bi-file-earmark-plus"></i> Nuevo Esp Tecnica
+                        </button>
+                        <button type="button" class="btn btn-info text-white" onclick="abrirModalReporteET()">
+                            <i class="bi bi-file-earmark-bar-graph"></i> Reporte
+                        </button>
+                        <button type="button" id="btn_filtrar" class="btn btn-light" onclick="abrirModalFiltros()">
+                            <i class="bi bi-filter"></i> Filtrar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="container-fluid my-3">
+            <div class="row g-2 align-items-end">
+   <div class="col-md-5">
+    <label for="filtroCodigo" class="form-label text-muted small mb-1">
+     <i class="bi bi-search"></i> Código
+     <span id="indicadorCodigo" class="spinner-border spinner-border-sm text-primary ms-2 d-none" role="status"></span>
+ </label>
+     <input type="text" class="form-control form-control-sm" id="filtroCodigo" placeholder="Escriba el código...">
+ </div>
+
+   <div class="col-md-5">
+            <label for="filtroDesc" class="form-label text-muted small mb-1">
+ <i class="bi bi-search"></i> Descripción
+      <span id="indicadorDesc" class="spinner-border spinner-border-sm text-primary ms-2 d-none" role="status"></span>
+   </label>
+            <input type="text" class="form-control form-control-sm" id="filtroDesc" placeholder="Escriba la descripción...">
+        </div>
+
+        <div class="col-md-2">
+     <button type="button" class="btn btn-sm btn-outline-secondary w-100" onclick="limpiarBusquedaRapidaEspTecnica()">
+     <i class="bi bi-x-circle"></i> Limpiar
+      </button>
+        </div>
+    </div>
+</div>
+
+        <div class="bg-white px-3 py-3 align-items-center">
+            <div class="row justify-content-center">
+                <div class="col">
+                    <div class="table-responsive">
+                        <div id="div_listado" class="container-fluid p-3">
+                            <table id="tablaEspTecnica" class="table table-hover align-middle">
+                                <thead class="encabezado-verde text-center">
+                                    <tr>
+                                        <th class="text-center" style="min-width: 120px;">Codigo</th>
+                                        <th class="text-start" style="min-width: 180px;">Descripcion</th>
+                                        <th class="text-center" style="min-width: 100px;">Nombre</th>
+                                        <th class="text-center" style="min-width: 120px;">Usuario</th>
+                                        <th class="text-center" style="min-width: 140px;">Fecha de Carga</th>
+                                        <th class="text-center" style="min-width: 200px;">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (Model != null && Model.Any())
+                                    {
+                                        foreach (var item in Model)
+                                        {
+                                            <tr>
+                                                <td class="text-center">@item.ItemCode</td>
+                                                <td class="text-start">@item.ItemName</td>
+                                                <td class="text-center">@item.Nombre</td>
+                                                <td class="text-center">@item.OpCarga</td>
+                                                <td class="text-center">@item.TiempoCarga.ToString("yyyy-MM-dd HH:mm")</td>
+                                                <td class="text-center">
+                                                    <div class="d-flex justify-content-center gap-2 flex-wrap">
+                                                        @if (!string.IsNullOrEmpty(item.RutaArchivo))
+                                                        {
+                                                            <a href="javascript:void(0);"
+                                                               class="btn btn-sm btn-outline-primary"
+                                                               onclick="verPDF('@Url.Action("DocumentoEspTecnicaPDF", "Documentos", new { id = item.ItemCode })')">
+                                                                <i class="bi bi-eye"></i> Ver
+                                                            </a>
+                                                        }
+                                                        else
+                                                        {
+                                                            <button type="button"
+                                                                    class="btn btn-sm btn-outline-secondary"
+                                                                    disabled
+                                                                    title="No existe documento cargado">
+                                                                <i class="bi bi-eye-slash"></i> Ver
+                                                            </button>
+                                                        }
+
+                                                        <button type="button"
+                                                                class="btn btn-sm btn-outline-danger ms-1"
+                                                                onclick="eliminarEspTecnica('@item.ItemCode',this)">
+                                                            <i class="bi bi-trash"></i> Eliminar
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<!--Modal de nuevo-->
+<div class="modal fade" id="modalEspecificacion" tabindex="-1" aria-labelledby="modalEspecificacionLabel" aria-hidden="true" data-bs-focus="false">
+    <div class="modal-dialog modal-dialog-centered modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-green-gradient">
+                <h5 class="modal-title" id="modalEspecificacionLabel">Especificaciones Técnicas</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <div class="container">
+                    <div class="row justify-content-center">
+                        @using (Html.BeginForm("GestionEspecificacionTecnica", "Documentos", FormMethod.Post, new { @enctype = "multipart/form-data" }))
+                        {
+                            @Html.AntiForgeryToken()
+                            <div class="mb-3">
+                                <label for="ItemCode" class="form-label">Codigo*</label>
+                                <select id="ItemCode" name="ItemCode" class="cls-select">
+                                </select>
+                            </div>
+                            <div class="mb-3">
+                                <label for="ItemName" class="form-label">Nombre del artículo</label>
+                                <input type="text" name="ItemName" id="ItemName" class="form-control" readonly />
+                                <input type="hidden" name="FirmCode" id="FirmCode" />
+                            </div>
+                            <div class="mb-3">
+                                <label for="ArchivoPdf" class="form-label">Archivo PDF</label>
+                                <input accept=".pdf" class="form-control" id="ArchivoPdf" name="ArchivoPdf" type="file" />
+                            </div>
+                            <div class="text-center">
+                                <button type="submit" class="btn btn-success">
+                                    <i class="bi bi-cloud-arrow-up-fill"></i> Cargar Archivo
+                                </button>
+                            </div>
+                        }
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--Modal Filtro-->
+<div class="modal fade" id="modalEspTecnica" tabindex="-1" aria-labelledby="modalFiltrosLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title" id="modalFiltrosLabel">Filtrar Esp Tecnica</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="filtroCodigo" class="form-label">Código</label>
+                        <input type="text" class="form-control" id="filtroCodigo" name="filtroCodigo">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="ffiltroDesc" class="form-label">Descripcion</label>
+                        <input type="text" class="form-control" id="filtroDesc" name="filtroDesc">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="filtroNombre" class="form-label">Nombre</label>
+                        <input type="text" class="form-control" id="filtroNombre" name="filtroNombre">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="filtroOpCarga" class="form-label">Usuario</label>
+                        <input type="text" class="form-control" id="filtroOpCarga" name="filtroOpCarga">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="filtroFechaC" class="form-label">Fecha Carga</label>
+                        <input type="date" class="form-control" id="filtroFechaC" name="filtroFechaC">
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" onclick="aplicarFiltros(true)">Cancelar</button>
+                <button type="button" class="btn btn-success" onclick="aplicarFiltros()">Aplicar Filtros</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--Modal visor Pdf-->
+<div class="modal fade" id="modalVisorPDF" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content" style="height: 90vh;">
+            <div class="modal-header bg-green-gradient text-white">
+                <h5 class="modal-title">Vista Previa</h5>
+
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+
+            <div class="modal-body bg-light text-center p-3" id="pdfContainer" style="overflow-y: auto;">
+            </div>
+            <div class="modal-footer bg-light">
+                <span id="pdfInfo" class="text-muted small"></span>
+                <button type="button" class="btn btn-light btn-sm" onclick="descargarPDF()">
+                    <i class="bi bi-download"></i> Descargar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalReporteEspTecnica" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-file-earmark-spreadsheet"></i> Reporte de Esp. Técnicas
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+
+            @using (Html.BeginForm("DescargarReporteEspTecnica", "Reportes", FormMethod.Post, new { id = "formReporteEspTecnica" }))
+            {
+                <div class="modal-body">
+                    <div class="alert alert-light border" role="alert">
+                        <small class="text-muted">
+                            <i class="bi bi-info-circle"></i> El rango de fechas no puede exceder los días naturales del mes seleccionado.
+                        </small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="txtOpCargaReporteET" class="form-label fw-bold">Usuario (Op. Carga)</label>
+                        <input type="text" class="form-control" name="opCarga" id="txtOpCargaReporteET" placeholder="Ej: JUAN.PEREZ (Opcional)">
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="txtFechaInicioReporteET" class="form-label fw-bold">Fecha Inicio*</label>
+                            <input type="date" class="form-control" name="fechaInicio" id="txtFechaInicioReporteET" required>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="txtFechaFinReporteET" class="form-label fw-bold">Fecha Fin*</label>
+                            <input type="date" class="form-control" name="fechaFin" id="txtFechaFinReporteET" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-download"></i> Descargar Excel
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+@section Scripts{
+
+    <script src="/lib/bootstrap/bootstrap.bundle.min.js"></script>
+
+    <!-- TomSelect -->
+    <link href="https://cdn.jsdelivr.net/npm/tom-select/dist/css/tom-select.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select/dist/js/tom-select.complete.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+
+    <script>
+
+    // ===== MENSAJE SEGURO =====
+    let mensaje = @Html.Raw(Json.Encode(TempData["Mensaje"] ?? ""));
+    if (mensaje) {
+        Swal.fire(mensaje);
+    }
+
+    // ===== DATATABLE =====
+    function inicializarTablaEspTecnica() {
+
+        if ($.fn.DataTable.isDataTable('#tablaEspTecnica')) {
+            $('#tablaEspTecnica').DataTable().destroy();
+        }
+
+        $('#tablaEspTecnica').DataTable({
+            language: {
+                url: "https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json"
+            },
+            responsive: true,
+            pageLength: 10
+        });
+    }
+
+    $(document).ready(function () {
+        inicializarTablaEspTecnica();
+
+        // ✅ NUEVO: Configurar búsqueda en tiempo real
+        configurarBusquedaRapidaEspTecnica();
+    });
+
+    // ==========================================
+    // ✅ BÚSQUEDA EN TIEMPO REAL PARA ESP. TÉCNICAS
+    // ==========================================
+    let timeoutBusquedaEspTecnica = null;
+
+    function configurarBusquedaRapidaEspTecnica() {
+        // Evento para Código
+        $('#filtroCodigo').on('keyup', function(e) {
+  if (e.key === 'Enter') {
+ejecutarBusquedaRapidaEspTecnica();
+ } else {
+clearTimeout(timeoutBusquedaEspTecnica);
+     timeoutBusquedaEspTecnica = setTimeout(() => {
+  ejecutarBusquedaRapidaEspTecnica();
+}, 800);
+      }
+    });
+
+ // Evento para Descripción
+    $('#filtroDesc').on('keyup', function(e) {
+  if (e.key === 'Enter') {
+ ejecutarBusquedaRapidaEspTecnica();
+  } else {
+      clearTimeout(timeoutBusquedaEspTecnica);
+  timeoutBusquedaEspTecnica = setTimeout(() => {
+  ejecutarBusquedaRapidaEspTecnica();
+   }, 800);
+}
+    });
+}
+
+async function ejecutarBusquedaRapidaEspTecnica() {
+    const codigo = $('#filtroCodigo').val().trim();
+    const desc = $('#filtroDesc').val().trim();
+    
+  // Si ambos están vacíos, limpiar
+    if (!codigo && !desc) {
+        limpiarBusquedaRapidaEspTecnica();
+ return;
+    }
+
+    try {
+  // Mostrar indicadores
+        $('#indicadorCodigo, #indicadorDesc').removeClass('d-none');
+        
+        // Deshabilitar inputs
+ $('#filtroCodigo, #filtroDesc').prop('disabled', true);
+
+ const params = new URLSearchParams({
+ ItemCode: codigo,
+     ItemName: desc
+   });
+
+        const response = await fetch(`@Url.Action("FiltrarEspTecnica", "Documentos")?${params.toString()}`);
+        
+        if (!response.ok) throw new Error("Error en el servidor");
+
+        const html = await response.text();
+        document.querySelector("#div_listado").innerHTML = html;
+      inicializarTablaEspTecnica();
+
+    } catch (error) {
+  console.error(error);
+        Swal.fire({
+     icon: 'error',
+     title: 'Error',
+  text: 'No se pudo realizar la búsqueda.',
+   toast: true,
+  position: 'top-end',
+      showConfirmButton: false,
+   timer: 3000
+        });
+    } finally {
+        // Ocultar indicadores y habilitar inputs
+        $('#indicadorCodigo, #indicadorDesc').addClass('d-none');
+        $('#filtroCodigo, #filtroDesc').prop('disabled', false);
+    }
+}
+
+function limpiarBusquedaRapidaEspTecnica() {
+    $('#filtroCodigo').val('');
+    $('#filtroDesc').val('');
+    window.location.reload();
+}
+    // ===== MODAL NUEVO =====
+    function abrirModalEspTecnica() {
+        const modal = bootstrap.Modal.getOrCreateInstance('#modalEspecificacion');
+        modal.show();
+    }
+
+    function cerrarModalEspTecnica() {
+        const el = document.getElementById('modalEspecificacion');
+        const modal = bootstrap.Modal.getInstance(el) || bootstrap.Modal.getOrCreateInstance(el);
+        modal.hide();
+        el.querySelector('form')?.reset();
+    }
+
+    // ===== ELIMINAR =====
+    function eliminarEspTecnica(ItemCode, btn) {
+        Swal.fire({
+            title: '¿Eliminar Especificación Técnica?',
+            text: `Se eliminará la Esp. Técnica: ${ItemCode}`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: '@Url.Action("EliminarEspTecnicaAjax", "Documentos")',
+                    type: 'POST',
+                    data: { ItemCode },
+                    success: function (response) {
+                        if (response.success) {
+                            Swal.fire('Eliminado', response.message, 'success')
+                                .then(() => window.location.reload());
+                        } else {
+                            Swal.fire('Error', response.message, 'error');
+                        }
+                    },
+                    error: function () {
+                        Swal.fire('Error', 'Ocurrió un error al eliminar.', 'error');
+                    }
+                });
+            }
+        });
+    }
+
+    </script>
+
+    <script>
+
+    async function VerificarEspTecRegistrado(itemcode) {
+        const resp = await fetch(`/Documentos/VerificarEspTec?itemcode=${encodeURIComponent(itemcode)}`);
+        const data = await resp.json();
+        return data.registrado === true;
+    }
+
+        let tomArticuloET = null;
+        const articuloMap = new Map();
+
+
+        function inicializarSlimSelectItemCode() {
+            const selectElement = document.querySelector('#ItemCode');
+
+            if (tomArticuloET) {
+                tomArticuloET.destroy();
+                tomArticuloET = null;
+            }
+
+            tomArticuloET = new TomSelect(selectElement, {
+                valueField: 'value',
+                labelField: 'itemName',
+                searchField: ['value', 'itemName'], // 🔥 BUSCA EN CÓDIGO Y NOMBRE
+                placeholder: 'Busque código o nombre...',
+                allowEmptyOption: true,
+                maxOptions: 100,
+
+                load: function (query, callback) {
+                    if (query.length < 3) {
+                        callback([]);
+                        return;
+                    }
+
+                    const formData = new FormData();
+                    formData.append('ItemName', query);
+                    formData.append('ItemCode', query);
+                    formData.append('FirmCode', '0');
+
+                    fetch('/Documentos/BuscarArticulosAjax', {
+                        method: 'POST',
+                        body: formData
+                    })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (!Array.isArray(data)) return callback([]);
+
+                            articuloMap.clear();
+
+                            data.forEach(item => {
+                                articuloMap.set(item.value, {
+                                    itemName: item.itemName,
+                                    firmCode: item.firmCode
+                                });
+                            });
+
+                            callback(data);
+                        })
+                        .catch(() => callback());
+                },
+
+                render: {
+                    option: function (item, escape) {
+                        return `
+                    <div class="mi-item-lista">
+                        <span class="mi-codigo">${escape(item.value)}</span>
+                        <span class="mi-nombre">${escape(item.itemName)}</span>
+                    </div>
+                `;
+                    },
+                    item: function (item, escape) {
+                        return `<div style="font-size:16px;">${escape(item.value)}</div>`;
+                    },
+                    no_results: function () {
+                        const query = this.input.value;
+                        if (query.length > 0 && query.length < 3) {
+                            return `<div class="no-results">Ingrese al menos 3 caracteres</div>`;
+                        }
+                        return `<div class="no-results">No encontrado</div>`;
+                    },
+                    loading: function () {
+                        return '<div class="loading">Buscando...</div>';
+                    }
+                },
+
+                onType: function (str) {
+                    if (str.length > 0 && str.length < 3) {
+                        this.clearOptions();
+                        this.open();
+                        this.refreshOptions(false);
+                    }
+                },
+
+                onChange: async function (value) {
+                    if (value) {
+                        const datos = this.options[value];
+
+                        if (datos) {
+                            // ✅ LLENA ItemName Y FirmCode
+                            document.querySelector('#ItemName').value = datos.itemName || '';
+                            document.querySelector('#FirmCode').value = datos.firmCode || '';
+                        }
+
+                        // ✅ VERIFICA SI YA EXISTE
+                        const yaExiste = await VerificarEspTecRegistrado(value);
+                        if (yaExiste) {
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'Especificación Técnica ya registrada',
+                                text: '¿Desea actualizarla?',
+                                showCancelButton: true,
+                                confirmButtonText: 'Sí, actualizar',
+                                cancelButtonText: 'No'
+                            }).then(r => {
+                                if (!r.isConfirmed) {
+                                    this.clear();
+                                    document.querySelector('#ItemName').value = '';
+                                    document.querySelector('#FirmCode').value = '';
+                                }
+                            });
+                        }
+
+                        this.close();
+                        this.blur();
+                    } else {
+                        document.querySelector('#ItemName').value = '';
+                        document.querySelector('#FirmCode').value = '';
+                    }
+                },
+
+                onBlur: function () {
+                    this.clearOptions();
+                }
+            });
+        }
+
+        $('#modalEspecificacion').on('shown.bs.modal', inicializarSlimSelectItemCode);
+
+        $('#modalEspecificacion').on('hidden.bs.modal', function () {
+            if (tomArticuloET) {
+                tomArticuloET.destroy();
+                tomArticuloET = null;
+            }
+            document.querySelector('#ItemName').value = '';
+            document.querySelector('#FirmCode').value = '';
+            articuloMap.clear();
+        });
+
+    function abrirModalFiltros() {
+        new bootstrap.Modal(document.getElementById('modalEspTecnica')).show();
+    }
+
+    async function aplicarFiltros(reset = false) {
+
+        const params = new URLSearchParams({
+            ItemCode: reset ? "" : document.getElementById("filtroCodigo").value,
+            ItemName: reset ? "" : document.getElementById("filtroDesc").value,
+            Nombre: reset ? "" : document.getElementById("filtroNombre").value,
+            OpCarga: reset ? "" : document.getElementById("filtroOpCarga").value,
+            TiempoCarga: reset ? "" : document.getElementById("filtroFechaC").value
+        });
+
+        if (!reset) {
+            const tieneFiltro = [...params.values()].some(v => v && v.length > 0);
+            if (!tieneFiltro) {
+                Swal.fire('Filtro vacío', 'Debe ingresar al menos un filtro.', 'warning');
+                return;
+            }
+        }
+
+        try {
+            const response = await fetch('@Url.Action("FiltrarEspTecnica","Documentos")?' + params.toString());
+            if (!response.ok) throw new Error('Error al filtrar');
+
+            document.querySelector("#div_listado").innerHTML = await response.text();
+            inicializarTablaEspTecnica();
+
+            const modal = bootstrap.Modal.getInstance(document.getElementById('modalEspTecnica'));
+            modal?.hide();
+
+            } catch (error) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error al filtrar',
+                    text: error.message || 'Ocurrió un error inesperado.',
+                });
+            }
+        }
+
+        // ==========================================
+     // FUNCIONES PARA REPORTE DE ESP. TÉCNICAS
+        // ==========================================
+
+        function abrirModalReporteET() {
+    // 1. Limpiamos el formulario específico de ET
+            const form = document.getElementById('formReporteEspTecnica');
+            if (form) form.reset();
+
+   // 2. Establecer fechas por defecto (Hoy)
+ const hoy = new Date().toISOString().split('T')[0];
+
+            const inputInicio = document.getElementById('txtFechaInicioReporteET');
+            const inputFin = document.getElementById('txtFechaFinReporteET');
+
+            if (inputInicio) inputInicio.value = hoy;
+if (inputFin) inputFin.value = hoy;
+
+       // 3. Instanciar y mostrar el modal
+            const modalEl = document.getElementById('modalReporteEspTecnica');
+         const modal = new bootstrap.Modal(modalEl);
+       modal.show();
+        }
+
+   // ==========================================
+        // FUNCIÓN VER PDF (PDF.JS CON CANVAS)
+        // ==========================================
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+        let pdfUrlActual = ''; // Variable global para guardar la URL del PDF actual
+
+        function verPDF(url) {
+            pdfUrlActual = url; // Guardar URL para descarga
+            const container = document.getElementById('pdfContainer');
+            const pdfInfo = document.getElementById('pdfInfo');
+
+            // 1. Limpiar el visor y mostrar spinner
+            container.innerHTML = '<div class="spinner-border text-success mt-5" role="status"><span class="visually-hidden">Cargando...</span></div>';
+            pdfInfo.textContent = '';
+
+            // 2. Abrir el modal
+            const modal = new bootstrap.Modal(document.getElementById('modalVisorPDF'));
+            modal.show();
+
+            // 3. Cargar el documento PDF
+            pdfjsLib.getDocument(url).promise.then(async function (pdfDoc) {
+                // Limpiar spinner
+                container.innerHTML = '';
+
+                // Mostrar información del PDF
+                pdfInfo.textContent = `Documento con ${pdfDoc.numPages} página(s)`;
+
+                // 4. ✅ Renderizar TODAS las páginas del PDF
+                for (let pageNum = 1; pageNum <= pdfDoc.numPages; pageNum++) {
+                    await renderizarPagina(pdfDoc, pageNum, container);
+                }
+
+            }).catch(function (error) {
+                console.error('Error al cargar PDF:', error);
+                container.innerHTML = '<p class="text-danger mt-3"><i class="bi bi-exclamation-triangle"></i> No se pudo cargar el documento PDF.</p>';
+                pdfInfo.textContent = '';
+            });
+        }
+
+        // Función auxiliar para renderizar una página individual
+        async function renderizarPagina(pdfDoc, num, container) {
+            const page = await pdfDoc.getPage(num);
+
+            // Escala para buena calidad
+            const scale = 1.5;
+            const viewport = page.getViewport({ scale: scale });
+
+            // Crear contenedor para cada página
+            const pageContainer = document.createElement('div');
+            pageContainer.className = 'mb-3';
+            pageContainer.style.position = 'relative';
+
+            // Agregar número de página si hay más de una
+            if (pdfDoc.numPages > 1) {
+                const pageLabel = document.createElement('div');
+                pageLabel.className = 'badge bg-secondary position-absolute top-0 start-50 translate-middle-x mt-2';
+                pageLabel.style.zIndex = '10';
+                pageLabel.textContent = `Página ${num} de ${pdfDoc.numPages}`;
+                pageContainer.appendChild(pageLabel);
+            }
+
+            // Crear canvas para esta página
+            const canvas = document.createElement('canvas');
+            canvas.className = 'shadow d-block mx-auto';
+            canvas.style.backgroundColor = 'white';
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+
+            pageContainer.appendChild(canvas);
+            container.appendChild(pageContainer);
+
+            // Renderizar la página en el canvas
+            const renderContext = {
+                canvasContext: canvas.getContext('2d'),
+                viewport: viewport
+            };
+
+            await page.render(renderContext).promise;
+        }
+
+        // ==========================================
+        // FUNCIÓN PARA DESCARGAR PDF
+        // ==========================================
+        function descargarPDF() {
+            if (!pdfUrlActual) {
+                Swal.fire('Error', 'No hay ningún PDF cargado para descargar.', 'error');
+                return;
+            }
+
+            // Crear enlace temporal para descarga
+            const link = document.createElement('a');
+            link.href = pdfUrlActual;
+            link.download = 'EspecificacionTecnica_' + new Date().getTime() + '.pdf';
+            link.target = '_blank';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            // Mostrar mensaje de confirmación
+            Swal.fire({
+                icon: 'success',
+                title: 'Descarga iniciada',
+                text: 'El archivo PDF se está descargando.',
+                timer: 2000,
+                showConfirmButton: false
+            });
+        }
+
+    </script>
+}

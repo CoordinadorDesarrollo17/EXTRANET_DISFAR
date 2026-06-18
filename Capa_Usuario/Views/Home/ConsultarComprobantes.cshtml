@@ -1,0 +1,73 @@
+﻿@model Capa_Entidad.Transacciones_ENT.TablasSql.Factura_E
+@using Capa_Entidad.Seguridad_ENT.TablasSql
+@{
+    ViewBag.Title = "ConsultarComprobantes";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var listaClientes = (List<Capa_Entidad.SociosNegocios_ENT.TablasSql.Clientes_E>)ViewBag.Clientes;
+}
+<a style="float:left;" href="@Url.Action("SesionUsuario", "Home")" class="btn btn-secondary">
+    <i class="icon-arrow-bold-left"></i>
+    <span>Regresar</span>
+</a>
+<br />
+<br />
+<div id="bodyform">
+    <div class="m-0 row justify-content-center align-items-center">
+        @using (Html.BeginForm())
+        {
+            @Html.AntiForgeryToken()
+            @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+            <h5 id="resaltado"><b>Consultar Comprobantes</b></h5><br />
+            <div class="form-group">
+                @if (ViewBag.Tipo != 3)
+                {
+                    <select name="CardCode" class="cls-select" style="width:350px">
+                        <option value="" selected="">Seleccionar cliente</option>
+                        @foreach (var obj in listaClientes)
+                        {
+                            <option value="@obj.CardCode">@obj.CardName</option>
+                        }
+                    </select>
+                }
+            </div>
+            <div class="row mb-4">
+                <div class="col-6">
+                    <div class="form-outline">
+                        <input class="form-control" type="date" name="FechaInicio" />
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="form-outline">
+                        <input class="form-control" type="date" name="FechaFin" />
+                    </div>
+                </div>
+            </div>
+            <div class="row">
+                <h6 style="color:blue; float:left">Nro de Comprobante</h6>
+                <div class="col-6">
+                    <div class="form-outline">
+                        <input class="form-control" type="text" placeholder="Serie (Ej.: F003)*" name="Correlativo" autocomplete="off" />
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="form-outline">
+                        <input class="form-control" type="text" placeholder="Numero*" name="Correlativo2" autocomplete="off" />
+                    </div>
+                </div>
+            </div><br />
+            <div class="form-group" style="text-align:center">
+                <button type="submit" value="Buscar" class="btn btn-danger"><i class="bi bi-search"></i> Buscar</button>
+            </div>
+            <p id="advertencias">*Campos opcionales, considera coincidencias</p>
+        }
+    </div>
+</div>
+@section Scripts{
+    <script>
+        let mensaje = '@ViewBag.mensaje'
+        if (mensaje != '') {
+            Swal.fire(mensaje)
+        }
+        inicializarSlimSelects('cls-select')
+    </script>
+}

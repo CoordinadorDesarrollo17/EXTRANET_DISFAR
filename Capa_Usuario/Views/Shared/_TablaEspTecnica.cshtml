@@ -1,0 +1,65 @@
+﻿@model List<Capa_Entidad.Inventario_ENT.TablasSql.EspecificacionesTecnicas_E>
+
+<table id="tablaEspTecnica" class="table table-hover align-middle">
+    <thead class="encabezado-verde text-center">
+        <tr>
+            <th class="text-center" style="min-width: 120px;">Codigo</th>
+            <th class="text-start" style="min-width: 180px;">Descripcion</th>
+            <th class="text-center" style="min-width: 100px;">Nombre</th>
+            <th class="text-center" style="min-width: 120px;">Usuario</th>
+            <th class="text-center" style="min-width: 140px;">Fecha de Carga</th>
+            <th class="text-center" style="min-width: 200px;">Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model != null && Model.Any())
+        {
+            foreach (var item in Model)
+            {
+                <tr>
+                    <td class="text-center">@item.ItemCode</td>
+                    <td class="text-start">@item.ItemName</td>
+                    <td class="text-center">@item.Nombre</td>
+                    <td class="text-center">@item.OpCarga</td>
+                    <td class="text-center">@item.TiempoCarga.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td class="text-center">
+                        <div class="d-flex justify-content-center gap-2 flex-wrap">
+                            @if (!string.IsNullOrEmpty(item.RutaArchivo))
+                            {
+                                <a href="javascript:void(0);"
+                                   class="btn btn-sm btn-outline-primary"
+                                   onclick="verPDF('@Url.Action("DocumentoEspTecnicaPDF", "Documentos", new { id = item.ItemCode })')">
+                                    <i class="bi bi-eye"></i> Ver
+                                </a>
+                            }
+                            else
+                            {
+                                <button type="button"
+                                        class="btn btn-sm btn-outline-secondary"
+                                        disabled
+                                        title="No existe documento cargado">
+                                    <i class="bi bi-eye-slash"></i> Ver
+                                </button>
+                            }
+
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-danger ms-1"
+                                    onclick="eliminarEspTecnica('@item.ItemCode',this)">
+                                <i class="bi bi-trash"></i> Eliminar
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="6" class="text-center text-muted py-4">
+                    <i class="bi bi-inbox"></i> No se encontraron especificaciones técnicas con los criterios de búsqueda.
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>
+

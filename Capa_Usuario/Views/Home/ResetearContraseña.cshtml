@@ -1,0 +1,48 @@
+﻿@model Capa_Entidad.Seguridad_ENT.TablasSql.Usuario_E
+    @using Capa_Entidad.Seguridad_ENT.TablasSql
+@{
+    ViewBag.Title = "ResetearContraseña";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<style>
+    td ,th{
+        text-align: left;
+    }
+</style>
+<a style="float:left;" href="@Url.Action("GestionUsuarios", "Usuario")" class="btn btn-secondary">
+    <i class="icon-arrow-bold-left"></i>
+    <span>Regresar</span>
+</a>
+<br />
+<br />
+<div id="bodyform">
+    <div class="m-0 row justify-content-center align-items-center">
+        <h5 id="resaltado">Datos del Cliente</h5><br /><br />
+        <table>
+            <tr>
+                <th class="col-5">@Html.DisplayName("Tipo")</th>
+                <td>
+                    <input class="form-control" type="text" value="@Model.NombreTipo" disabled readonly />
+                </td>
+            </tr>
+            <tr>
+                <th class="col-5">@Html.DisplayName("Usuario")</th>
+                <td>
+                    <input class="form-control" type="text" value="@Model.CodUser" disabled readonly />
+                </td>
+            </tr>
+            <tr>
+                <th class="col-5">@Html.DisplayName("Nombre")</th>
+                <td>
+                    <input class="form-control" type="text" value="@Model.Nombre" disabled readonly />
+                </td>
+            </tr>
+            <tr>
+                <th class="col-5">@Html.DisplayName("Nueva Contraseña")</th>
+                <td>
+                    <input class="form-control" type="text" value="@Model.NuevaPassword" disabled readonly />
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>

@@ -1,0 +1,128 @@
+﻿@model Capa_Entidad.Seguridad_ENT.TablasSql.Usuario_E
+@using Capa_Entidad.Seguridad_ENT.TablasSql
+@{
+    ViewBag.Title = "NuevoUsuario";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    List<TipoUsuario_E> tipos = (List<TipoUsuario_E>)ViewBag.Tipos;
+    var jss = new System.Web.Script.Serialization.JavaScriptSerializer();
+    var equInfoJson = jss.Serialize(tipos);
+}
+<style>
+    td ,th {
+        text-align: left;
+    }
+</style>
+<script>
+    var artInfo = "";
+    var equInfo = JSON.parse('@Html.Raw(equInfoJson)');
+    function listarUsuarios() {
+        var parametros = {};
+        var htm = " ";
+        if ($("#TipoUsuarioId").val() == 3) {
+            $("#Usuario").attr("readonly", true);
+            $.ajax('/Home/ListarUsuariosClientes',
+                {
+                    data: parametros,
+                    dataType: 'json',
+                    cache: false,
+                    type: 'post'
+                })
+                .done(function (response) {
+                    artInfo = response;
+                    $.each(artInfo, function (key, value) {
+                        htm += "<option value='" + value.CardName + "' CardCode ='" + value.CardCode + "'></option>";                      
+                    });
+                    $("#ListaUsuarios").html(htm);
+                });
+        }
+        else {
+            $("#Nombre").val("");
+            $("#Usuario").val("");
+            $("#Usuario").attr("readonly",false);
+            $("#ListaUsuarios").html(htm);
+        }
+    }
+    function completaCampos() {
+        var Usuario = $("#ListaUsuarios option[value='" + $("#Nombre").val() + "']").attr("CardCode")
+        $("#Usuario").val(Usuario);
+    }
+    function validarEnviarFormulario() {
+        var object = $("#NuevoUsuario").serialize();
+            $.ajax('/Home/validarNuevoUsuario',
+                {
+                    data: object,
+                    dataType: 'html',
+                    cache: false,
+                    type: 'post'
+                })
+                .done(function (response) {
+                    if (response != "true") { swal.fire({ title: response, text: "Presione OK para continuar", icon: "warning" }); return false}
+                    else { $("#NuevoUsuario").submit();}
+                });
+    }
+</script>
+@using (Html.BeginForm(null, null, FormMethod.Post, new { id = "NuevoUsuario",autocomplete="off" }))
+{
+    @Html.AntiForgeryToken()
+    <a style="float:left;" href="@Url.Action("GestionUsuarios", "Home")" class="btn btn-secondary">
+        <i class="icon-arrow-bold-left"></i>
+        <span>Regresar</span>
+    </a>
+    <br />
+    <br />
+    <div id="bodyform">
+        @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+        <h5 id="resaltado">Registro de Nuevo Usuario</h5><br />
+        <table>
+            <tr>
+                <th class="col-5">@Html.DisplayName("Tipo")</th>
+                <td>
+                    <select class="form-select" id="TipoUsuarioId" type="text" name="TipoUsuarioId" onchange="listarUsuarios();">
+                        <option value="">Seleccione...</option>
+                         @foreach (TipoUsuario_E obj in tipos)
+                         {
+                            <option value="@obj.Id" >@obj.Tipo</option>
+                        }
+                    </select>
+                </td>
+            </tr>
+            <tr>
+                <th class="col-5">@Html.DisplayName("Nombre o Razon Social")</th>
+                <td>
+                    <input class="form-control" type="search" list="ListaUsuarios" name="Nombre" id="Nombre"
+                           autocomplete="off" onchange="completaCampos();" />
+                    <datalist id="ListaUsuarios"></datalist>
+                </td>
+            </tr>
+            <tr>
+                <th class="col-5">@Html.DisplayName("Usuario")</th>
+                <td>
+                    <input class="form-control" type="search" name="Usuario" id="Usuario" autocomplete="off" readonly/>
+                </td>
+            </tr>
+            <tr>
+                <th class="col-5"> @Html.DisplayName("Contraseña")</th>
+                <td><input class="form-control" type="password" name="Contrasena" id="Contrasena" autocomplete="new-password" /></td>
+            </tr>
+            <tr>
+                <th class="col-5">@Html.DisplayName("Repita contraseña")</th>
+                <td><input class="form-control" type="password" name="NuevaContrasena" id="NuevaContrasena" autocomplete="new-password" /></td>
+            </tr>
+        </table>
+        <br />
+        <div class="form-group">
+            <div class="col-md-offset-2 col-md-12">
+                <button type="button"  class="btn btn-danger" onclick="validarEnviarFormulario();">Registrar</button>
+            </div>
+        </div>
+    </div>
+}
+<script>
+    if ('@ViewBag.mensaje' != "") {
+        swal.fire({
+            title: "@ViewBag.mensaje",
+            text: "Verifique campos",
+            icon: "warning"
+        })
+    };
+</script>

@@ -1,0 +1,375 @@
+﻿@model IEnumerable<Capa_Entidad.Inventario_ENT.TablasSql.LotesRegistroSanitario_E>
+@using Capa_Entidad.Inventario_ENT.TablasSql
+@{
+    ViewBag.Title = "Gestión de Documentos";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var f = (Capa_Entidad.Inventario_ENT.TablasSql.LotesRegistroSanitario_E)ViewBag.fil;
+}
+
+<style>
+    table {
+        text-align: center;
+    }
+
+    td {
+        padding: 10px;
+        font-size: 14px;
+    }
+</style>
+<div class="row">
+    <div class="col-lg-12 pt-4">
+        <div class="border-cabecera-seccion bg-cobefar-degradado-1 pb-2">
+            <div class="row px-3 pt-3"><h3 class="titulo-seccion">@ViewBag.Title.ToUpper()</h3></div>
+            <div class="row px-3 pt-3">
+                <div class="col-lg-12">
+                    <div class="d-flex flex-wrap align-items-start gap-2">
+                        <a style="float:left;" href="@Url.Action("SesionUsuario", "Usuario")" class="btn btn-secondary">
+                            <i class="icon-arrow-bold-left"></i>
+                            <span>Regresar</span>
+                        </a>
+                        <button type="button" class="btn btn-warning" onclick="location.href='@Url.Action("GestionProtocolo", "Documentos")'">
+                            <i class="icon-home1"></i>
+                            Gestión de Protocolos
+                        </button>
+
+                        <button type="button" class="btn btn-warning" onclick="location.href='@Url.Action("GestionRegistroSanitario", "Documentos")'">
+                            <i class="icon-home1"></i>
+                            Gestión de Reg. Sanitarios
+                        </button>
+
+                        <button type="button" class="btn btn-warning" onclick="location.href='@Url.Action("GestionEspecificacionTecnica", "Documentos")'">
+                            <i class="icon-home1"></i>
+                            Gestión de Esp.Tecnica
+                        </button>
+
+                        <button type="button" id="btn_filtrar" class="btn btn-light" onclick="abrirModalFiltros()">
+                            <i class="bi bi-filter"></i> Filtrar
+                        </button>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <div class="container-fluid my-3">
+            <div class="row g-2 align-items-end">
+                <div class="col-md-4">
+                    <label for="filtroCodigo" class="form-label text-muted small mb-1">
+                        <i class="bi bi-search"></i> Código
+                        <span id="indicadorCodigo" class="spinner-border spinner-border-sm text-primary ms-2 d-none" role="status"></span>
+                    </label>
+                    <input type="text" class="form-control form-control-sm" id="filtroCodigo" placeholder="Escriba el código...">
+                </div>
+
+                <div class="col-md-3">
+                    <label for="filtroDescripcion" class="form-label text-muted small mb-1">
+                        <i class="bi bi-search"></i> Descripción
+                        <span id="indicadorDesc" class="spinner-border spinner-border-sm text-primary ms-2 d-none" role="status"></span>
+                    </label>
+                    <input type="text" class="form-control form-control-sm" id="filtroDescripcion" placeholder="Escriba la descripción...">
+                </div>
+
+                <div class="col-md-3">
+                    <label for="filtroLote" class="form-label text-muted small mb-1">
+                        <i class="bi bi-search"></i> Lote
+                        <span id="indicadorLote" class="spinner-border spinner-border-sm text-primary ms-2 d-none" role="status"></span>
+                    </label>
+                    <input type="text" class="form-control form-control-sm" id="filtroLote" placeholder="Escriba el lote...">
+                </div>
+
+                <div class="col-md-2">
+                    <button type="button" class="btn btn-sm btn-outline-secondary w-100" onclick="limpiarBusquedaRapidaDocumentos()">
+                        <i class="bi bi-x-circle"></i> Limpiar
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white px-3 py-3 align-items-center">
+            <div class="row justify-content-center">
+                <div class="col">
+                    <div class="table-responsive">
+                        <div id="div_listado" class="container-fluid p-3">
+                            <table id="tablaDocumentos" class="table table-hover ">
+                                <thead class="encabezado-verde text-center">
+                                    <tr>
+                                        <th class="text-center" style="min-width: 120px;">Código</th>
+                                        <th class="text-start" style="min-width: 180px;">Descripción</th>
+                                        <th class="text-center" style="min-width: 100px;">Lote</th>
+                                        <th class="text-center" style="min-width: 110px;">Fecha. Venc.</th>
+                                        <th class="text-center" style="min-width: 120px;">NroRegSa</th>
+                                        <th class="text-center" style="min-width: 80px;">R.S.</th>
+                                        <th class="text-center" style="min-width: 80px;">E.T.</th>
+                                        <th class="text-center" style="min-width: 80px;">P.T.</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @if (Model != null && Model.Any())
+                                    {
+                                        foreach (var item in Model)
+                                        {
+                                            <tr>
+                                                <td class="text-center">@Html.DisplayFor(modelItem => item.ItemCode)</td>
+                                                <td class="text-start">@Html.DisplayFor(modelItem => item.ItemName)</td>
+                                                <td class="text-center">@Html.DisplayFor(modelItem => item.DistNumber)</td>
+                                                <td class="text-center">@item.ExpDate</td>
+                                                <td class="text-center">@Html.DisplayFor(modelItem => item.MnfSerial)</td>
+                                                <td class="text-center">
+                                                    @if (item.MnfSerial != null && item.ExistRutaRs)
+                                                    {
+                                                        <a href="@Url.Action("DocumentoRegSanit", "Documentos", new { id = item.MnfSerial })"
+                                                           target="_blank" class="btn btn-sm btn-outline-primary" title="Descargar R.S.">
+                                                            <i class="bi bi-download"></i>
+                                                        </a>
+                                                    }
+                                                </td>
+                                                <td class="text-center">
+                                                    @if (item.ItemCode != null && item.ExistRutaEt)
+                                                    {
+                                                        var cod = item.ItemCode.Contains("&") ? item.ItemCode.Replace("&", "ampersand") : item.ItemCode;
+                                                        <a href="@Url.Action("DocumentoEspTecnica", "Documentos", new { id = cod })"
+                                                           target="_blank" class="btn btn-sm btn-outline-secondary" title="Descargar E.T.">
+                                                            <i class="bi bi-download"></i>
+                                                        </a>
+                                                    }
+                                                </td>
+                                                <td class="text-center">
+                                                    @if (item.ItemCode != null && item.DistNumber != null && item.ExistRutaPt)
+                                                    {
+                                                        var cod = item.ItemCode.Contains("&") ? item.ItemCode.Replace("&", "ampersand") : item.ItemCode;
+                                                        <a href="@Url.Action("DocumentoProtocolo", "Documentos", new { id = cod, Lote = item.DistNumber })"
+                                                           target="_blank" class="btn btn-sm btn-outline-success" title="Descargar P.T.">
+                                                            <i class="bi bi-download"></i>
+                                                        </a>
+                                                    }
+                                                </td>
+                                            </tr>
+                                        }
+                                    }
+                                </tbody>
+                            </table>
+
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalDocumentos" tabindex="-1" aria-labelledby="modalFiltrosLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-green-gradient">
+                <h5 class="modal-title" id="modalFiltrosLabel">Filtrar Documentos</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="filtroCodigo" class="form-label">Código</label>
+                        <input type="text" class="form-control" id="filtroCodigo" name="filtroCodigo">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="filtroDescripcion" class="form-label">Descripción</label>
+                        <input type="text" class="form-control" id="filtroDescripcion" name="filtroDescripcion">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="filtroLote" class="form-label">Lote</label>
+                        <input type="text" class="form-control" id="filtroLote" name="filtroLote">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="filtroFechaV" class="form-label">Fecha Vencimiento</label>
+                        <input type="date" class="form-control" id="filtroFechaV" name="filtroFechaV">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="filtroNroRegSa" class="form-label">Nro Reg. Sanitario</label>
+                        <input type="text" class="form-control" id="filtroNroRegSa" name="filtroNroRegSa">
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" onclick="aplicarFiltros(true)">Cancelar</button>
+                <button type="button" class="btn btn-success" onclick="aplicarFiltros()">Aplicar Filtros</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts{
+    <script>
+
+    function inicializarTablaDocumentos() {
+
+        if ($.fn.DataTable.isDataTable('#tablaDocumentos')) {
+            $('#tablaDocumentos').DataTable().destroy();
+        }
+
+        $('#tablaDocumentos').DataTable({
+            language: {
+                url: "https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json",
+                emptyTable: "No se encontraron documentos con los criterios de búsqueda."
+            },
+            pageLength: 10,
+            lengthMenu: [5, 10, 20, 50],
+            responsive: true
+        });
+    }
+
+    $(document).ready(function () {
+        inicializarTablaDocumentos();
+
+        // ✅ NUEVO: Configurar búsqueda en tiempo real
+        configurarBusquedaRapidaDocumentos();
+    });
+
+    // ==========================================
+    // ✅ BÚSQUEDA EN TIEMPO REAL PARA DOCUMENTOS
+    // ==========================================
+    let timeoutBusquedaDocumentos = null;
+
+    function configurarBusquedaRapidaDocumentos() {
+        // Evento para Código
+        $('#filtroCodigo').on('keyup', function(e) {
+            if (e.key === 'Enter') {
+ ejecutarBusquedaRapidaDocumentos();
+   } else {
+       clearTimeout(timeoutBusquedaDocumentos);
+      timeoutBusquedaDocumentos = setTimeout(() => {
+     ejecutarBusquedaRapidaDocumentos();
+   }, 800);
+    }
+    });
+
+    // Evento para Descripción
+    $('#filtroDescripcion').on('keyup', function(e) {
+  if (e.key === 'Enter') {
+  ejecutarBusquedaRapidaDocumentos();
+  } else {
+      clearTimeout(timeoutBusquedaDocumentos);
+ timeoutBusquedaDocumentos = setTimeout(() => {
+        ejecutarBusquedaRapidaDocumentos();
+    }, 800);
+   }
+    });
+
+    // Evento para Lote
+    $('#filtroLote').on('keyup', function(e) {
+   if (e.key === 'Enter') {
+       ejecutarBusquedaRapidaDocumentos();
+    } else {
+ clearTimeout(timeoutBusquedaDocumentos);
+  timeoutBusquedaDocumentos = setTimeout(() => {
+ ejecutarBusquedaRapidaDocumentos();
+ }, 800);
+}
+    });
+}
+
+async function ejecutarBusquedaRapidaDocumentos() {
+
+    const codigo = $('#filtroCodigo').val().trim();
+    const desc = $('#filtroDescripcion').val().trim();
+    const lote = $('#filtroLote').val().trim();
+
+    if (!codigo && !desc && !lote) {
+        limpiarBusquedaRapidaDocumentos();
+        return;
+    }
+
+    try {
+        $('#indicadorCodigo, #indicadorDesc, #indicadorLote').removeClass('d-none');
+        $('#filtroCodigo, #filtroDescripcion, #filtroLote').prop('disabled', true);
+
+        const params = new URLSearchParams({
+            ItemCode: codigo,
+            ItemName: desc,
+            DistNumber: lote
+        });
+
+        const response = await fetch(`@Url.Action("FiltrarDocumentos", "Documentos")?${params.toString()}`);
+        if (!response.ok) throw new Error("Error en el servidor");
+
+        const html = await response.text();
+
+        var table = $('#tablaDocumentos').DataTable();
+
+        // 🔥 ESTA ES LA CLAVE
+        table.clear();
+        table.rows.add($(html).find('tbody tr'));
+        table.draw();
+
+    } catch (error) {
+        console.error(error);
+    } finally {
+        $('#indicadorCodigo, #indicadorDesc, #indicadorLote').addClass('d-none');
+        $('#filtroCodigo, #filtroDescripcion, #filtroLote').prop('disabled', false);
+    }
+}
+function limpiarBusquedaRapidaDocumentos() {
+    $('#filtroCodigo').val('');
+    $('#filtroDescripcion').val('');
+    $('#filtroLote').val('');
+    window.location.reload();
+}
+
+    function abrirModalFiltros() {
+        const modal = new bootstrap.Modal(document.getElementById('modalDocumentos'));
+        modal.show();
+    }
+
+    async function aplicarFiltros(reset = false) {
+
+        const params = new URLSearchParams({
+            ItemCode: reset ? "" : document.getElementById("filtroCodigo").value,
+            ItemName: reset ? "" : document.getElementById("filtroDescripcion").value,
+            DistNumber: reset ? "" : document.getElementById("filtroLote").value,
+            ExpDate: reset ? "" : document.getElementById("filtroFechaV").value,
+            MnfSerial: reset ? "" : document.getElementById("filtroNroRegSa").value
+        });
+
+        if (!reset) {
+            const tieneFiltro = [...params.values()].some(v => v && v.length > 0);
+            if (!tieneFiltro) {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Filtro vacío',
+                    text: 'Debe ingresar al menos un filtro para buscar.'
+                });
+                return;
+            }
+        }
+
+        try {
+            const response = await fetch(
+                '@Url.Action("FiltrarDocumentos", "Documentos")?' + params.toString(),
+                { method: 'GET' }
+            );
+
+            if (!response.ok) throw new Error("Error al filtrar documentos");
+
+            const html = await response.text();
+            document.querySelector("#div_listado").innerHTML = html;
+
+            inicializarTablaDocumentos();
+
+            const modalElement = document.getElementById('modalDocumentos');
+            const instance = bootstrap.Modal.getInstance(modalElement)
+                ?? new bootstrap.Modal(modalElement);
+            instance.hide();
+
+        } catch (error) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: error.message || 'Ocurrió un error inesperado.'
+            });
+        }
+    }
+
+    </script>
+}
+
+

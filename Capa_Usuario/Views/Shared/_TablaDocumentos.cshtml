@@ -1,0 +1,63 @@
+﻿@model List<Capa_Entidad.Inventario_ENT.TablasSql.LotesRegistroSanitario_E>
+
+<table id="tablaDocumentos" class="table table-hover ">
+    <thead class="encabezado-verde text-center">
+        <tr>
+            <th class="text-center" style="min-width: 120px;">Código</th>
+            <th class="text-start" style="min-width: 180px;">Descripción</th>
+            <th class="text-center" style="min-width: 100px;">Lote</th>
+            <th class="text-center" style="min-width: 110px;">Fecha. Venc.</th>
+            <th class="text-center" style="min-width: 120px;">NroRegSa</th>
+            <th class="text-center" style="min-width: 80px;">R.S.</th>
+            <th class="text-center" style="min-width: 80px;">E.T.</th>
+            <th class="text-center" style="min-width: 80px;">P.T.</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model != null && Model.Any())
+        {
+            foreach (var item in Model)
+            {
+                <tr>
+                    <td class="text-center">@item.ItemCode</td>
+                    <td class="text-start">@item.ItemName</td>
+                    <td class="text-center">@item.DistNumber</td>
+                    <td class="text-center">@item.ExpDate</td>
+                    <td class="text-center">@item.MnfSerial</td>
+
+                    <td class="text-center">
+                        @if (item.MnfSerial != null && item.ExistRutaRs)
+                        {
+                            <a href="@Url.Action("DocumentoRegSanit", "Documentos", new { id = item.MnfSerial })"
+                               target="_blank" class="btn btn-sm btn-outline-primary">
+                                <i class="bi bi-download"></i>
+                            </a>
+                        }
+                    </td>
+
+                    <td class="text-center">
+                        @if (item.ItemCode != null && item.ExistRutaEt)
+                        {
+                            var cod = item.ItemCode.Contains("&") ? item.ItemCode.Replace("&", "ampersand") : item.ItemCode;
+                            <a href="@Url.Action("DocumentoEspTecnica", "Documentos", new { id = cod })"
+                               target="_blank" class="btn btn-sm btn-outline-secondary">
+                                <i class="bi bi-download"></i>
+                            </a>
+                        }
+                    </td>
+
+                    <td class="text-center">
+                        @if (item.ItemCode != null && item.DistNumber != null && item.ExistRutaPt)
+                        {
+                            var cod = item.ItemCode.Contains("&") ? item.ItemCode.Replace("&", "ampersand") : item.ItemCode;
+                            <a href="@Url.Action("DocumentoProtocolo", "Documentos", new { id = cod, Lote = item.DistNumber })"
+                               target="_blank" class="btn btn-sm btn-outline-success">
+                                <i class="bi bi-download"></i>
+                            </a>
+                        }
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>

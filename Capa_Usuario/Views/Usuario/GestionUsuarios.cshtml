@@ -1,0 +1,395 @@
+﻿@model List<Capa_Entidad.Seguridad_ENT.TablasSql.Usuario_E>
+@using Capa_Entidad.Seguridad_ENT.TablasSql;
+
+@{
+    ViewBag.Title = "Gestion de Usuarios";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    List<TipoUsuario_E> tipos = (List<TipoUsuario_E>)ViewBag.Tipos;
+    Usuario_E ousrE = new Usuario_E();
+    var jss = new System.Web.Script.Serialization.JavaScriptSerializer();
+    var equInfoJson = jss.Serialize(tipos);
+}
+
+<style>
+</style>
+<div class="row">
+    <div class="col-lg-12 pt-4">
+        <div class="border-cabecera-seccion bg-cobefar-degradado-1 pb-2">
+            <div class="row px-3 pt-3"><h3 class="titulo-seccion">@ViewBag.Title.ToUpper()</h3></div>
+            <div class="row px-3 pt-3">
+                <div class="col-lg-12">
+                    <div class="d-flex flex-wrap align-items-start gap-2">
+                        <a style="float:left;" href="@Url.Action("SesionUsuario", "Usuario")" class="btn btn-secondary">
+                            <i class="icon-arrow-bold-left"></i> Regresar
+                        </a>
+                        <button type="button" class="btn btn-primary" id="btnNuevoUsuario" onclick="abrirModalCrearUsuario()">
+                            <i class="bi bi-file-earmark-plus"></i> Nuevo Usuario
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white px-3 py-3 align-items-center">
+            <div class="row justify-content-center">
+                <div class="col">
+                    <div class="table-responsive">
+                        <div class="container-fluid p-3">
+                            <table id="tablaUsuarios" class="table table-hover align-middle">
+                                <thead class=" encabezado-verde text-center ">
+                                    <tr>
+                                        <th class="text-center" style="min-width: 150px;">Usuario</th>
+                                        <th class="text-center" style="min-width: 180px;">Tipo de Usuario</th>
+                                        <th class="text-start" style="width: 100%;">Nombre o Razón Social</th>
+                                        <th class="text-center" style="min-width: 200px;">Fecha Creacion</th>
+                                        <th class="text-center" style="min-width: 180px;">Acciones</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    @foreach (var item in Model)
+                                    {
+                                        <tr>
+                                            <td class="text-center">@Html.DisplayFor(modelItem => item.Usuario)</td>
+                                            <td class="text-center">@item.NombreTipoUsuario</td>
+                                            <td class="text-start">@Html.DisplayFor(modelItem => item.Nombre)</td>
+                                            <td class="text-center">
+                                                @(item.TiempoCreacion.HasValue
+                                            ? item.TiempoCreacion.Value.ToString("yyyy-MM-dd HH:mm")
+                                            : "-")
+                                            </td>
+                                            <td class="text-center">
+                                              @{
+                                           // Obtener el TipoUsuarioId del usuario en sesión
+                                           int tipoUsuarioSesion = ViewBag.TipoUsuarioSesion ?? 0;
+                                                 
+                                                 // Verificar si el usuario de la fila es Administrador
+                                                bool esAdministrador = item.NombreTipoUsuario == "Administrador";
+                                                bool usuarioEsAdministrador = (tipoUsuarioSesion == 1);
+                                                
+                                                // Lógica:
+                                                // - Si el usuario en sesión es Administrador (1): puede resetear a TODOS
+                                             // - Si el usuario en sesión es Encargado (2): NO puede resetear a Administradores
+                                                bool puedeResetear = usuarioEsAdministrador || !esAdministrador;
+                                           }
+                                      
+                                                @if (puedeResetear)
+                                                {
+<button type="button"
+   class="btn btn-sm btn-danger rounded-pill px-3"
+    onclick="return confirmarReset(@item.Id)">
+     <i class="bi bi-arrow-clockwise me-1"></i>
+        Resetear
+       </button>
+         }
+       else
+            {
+  <span class="text-muted">-</span>
+       }
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalNuevoUsuario" tabindex="-1" aria-labelledby="modalNuevoUsuarioLabel" aria-hidden="true" data-bs-focus="false">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-green-gradient">
+                <h5 class="modal-title" id="modalNuevoUsuarioLabel">Registro de Nuevo Usuario</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                @using (Html.BeginForm("NuevoUsuario", "Usuario", FormMethod.Post, new { id = "NuevoUsuario" }))
+                {
+                    @Html.AntiForgeryToken()
+                    @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+
+                    <div class="mb-3">
+                        <label for="TipoUsuarioId" class="form-label">Tipo</label>
+                        <select class="form-select" id="TipoUsuarioId" name="TipoUsuarioId" onchange="listarUsuarios();">
+                            <option value="">Seleccione...</option>
+                            @foreach (TipoUsuario_E obj in tipos)
+                            {
+                                <option value="@obj.Id">@obj.Tipo</option>
+                            }
+                        </select>
+                    </div>
+
+                    <div class="mb-3" id="contenedorNombre">
+                        <!-- Aquí inyectaremos el input o el select -->
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="Usuario" class="form-label">Usuario</label>
+                        <input class="form-control" type="text" name="Usuario" id="Usuario" autocomplete="off" readonly />
+                    </div>
+                    <input type="hidden" name="NombreReal" id="NombreReal" />
+                    <div class="mb-3">
+                        <label for="Contrasena" class="form-label">Contraseña</label>
+                        <input class="form-control" type="password" name="Contrasena" id="Contrasena" autocomplete="new-password" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="NuevaContrasena" class="form-label">Repita contraseña</label>
+                        <input class="form-control" type="password" name="NuevaContrasena" id="NuevaContrasena" autocomplete="new-password" />
+                    </div>
+
+                    <div class="text-end">
+                        <button type="button" class="btn btn-success" onclick="validarEnviarFormulario();">
+                            Registrar
+                        </button>
+                        <a href="@Url.Action("GestionUsuarios", "Usuario")" class="btn btn-outline-secondary">
+                            <i class="icon-arrow-bold-left"></i> Regresar
+                        </a>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<!--Modal Reseteo Contraseña-->
+<div class="modal fade" id="modalDatosCliente" tabindex="-1" aria-labelledby="modalDatosClienteLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered" style="max-width: 500px;">
+        <div class="modal-content">
+            <div class="modal-header bg-green-gradient">
+                <h5 class="modal-title">Datos del Cliente</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body">
+                <table style="width: 100%; border-collapse: separate; border-spacing: 10px;">
+                    <tr>
+                        <th style="white-space: nowrap; text-align: left; width: 30%;">Tipo</th>
+                        <td style="width: 70%;"><input class="form-control" type="text" id="modalTipo" readonly /></td>
+                    </tr>
+                    <tr>
+                        <th style="white-space: nowrap; text-align: left;">Usuario</th>
+                        <td><input class="form-control" type="text" id="modalUsuario" readonly /></td>
+                    </tr>
+                    <tr>
+                        <th style="white-space: nowrap; text-align: left;">Nombre</th>
+                        <td><input class="form-control" type="text" id="modalNombre" readonly /></td>
+                    </tr>
+                    <tr>
+                        <th style="white-space: nowrap; text-align: left;">Nueva Contraseña</th>
+                        <td><input class="form-control" type="text" id="modalContrasena" readonly /></td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts{
+
+    <script>
+        // ===== DataTable =====
+        function inicializarTablaUsuarios() {
+            if ($.fn.DataTable.isDataTable('#tablaUsuarios')) {
+                $('#tablaUsuarios').DataTable().destroy();
+            }
+
+            $('#tablaUsuarios').DataTable({
+                language: {
+                    url: "https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json"
+                },
+                pageLength: 10,
+                lengthMenu: [5, 10, 20, 50],
+                responsive: true
+            });
+        }
+
+        $(document).ready(function () {
+            inicializarTablaUsuarios();
+        });
+
+        function filtrar() {
+            var object = $("#frm").serialize();
+            $(location).attr('href', "/Usuario/GestionUsuarios?" + object);
+        }
+
+        // ===== SlimSelect =====
+        let selectSlim = null;
+        const clientesMap = new Map(); // CardName -> { code, name }
+
+        function listarUsuarios() {
+            const tipoUsuario = $("#TipoUsuarioId").val();
+            const contenedor = $("#contenedorNombre");
+
+            // limpiar estado previo
+            if (selectSlim instanceof SlimSelect) {
+                try { selectSlim.destroy(); } catch (e) { }
+                selectSlim = null;
+            }
+            clientesMap.clear();
+
+            if (tipoUsuario == 3) {
+
+                contenedor.html(`
+                        <label for="Nombre" class="form-label">Nombre o Razón Social</label>
+                        <select id="Nombre" name="Nombre" class="form-control"></select>
+                    `);
+
+                selectSlim = new SlimSelect({
+                    select: '#Nombre',
+                    placeholder: 'Seleccione un cliente',
+                    searchPlaceholder: 'Buscar cliente...',
+                    events: {
+                        afterChange: () => {
+                            const val = selectSlim.getSelected()?.[0] || '';
+                            const info = clientesMap.get(val);
+                            $("#Usuario").val(info ? info.code : "");
+                            $("#NombreReal").val(info ? info.name : val);
+                        }
+                    }
+                });
+
+                $.ajax('/Usuario/ListarUsuariosClientes', {
+                    type: 'POST',
+                    dataType: 'json',
+                    cache: false
+                }).done(function (response) {
+
+                    const opciones = response.map(item => {
+                        clientesMap.set(item.CardName, {
+                            code: item.CardCode,
+                            name: item.CardName
+                        });
+
+                        return {
+                            text: `${item.CardCode} - ${item.CardName}`,
+                            value: item.CardName
+                        };
+                    });
+
+                    selectSlim.setData(opciones);
+                });
+
+                // respaldo por cambio nativo
+                $(document)
+                    .off('change', '#Nombre')
+                    .on('change', '#Nombre', function () {
+                        const val = this.value;
+                        const info = clientesMap.get(val);
+                        $("#Usuario").val(info ? info.code : "");
+                        $("#NombreReal").val(info ? info.name : val);
+                    });
+
+            } else {
+
+                contenedor.html(`
+                        <label for="Nombre" class="form-label">Nombre o Razón Social</label>
+                        <input class="form-control" type="text" name="Nombre" id="Nombre" autocomplete="off" />
+                    `);
+
+                $("#Usuario").val("").prop("readonly", false);
+            }
+        }
+
+        // ===== Validar y enviar =====
+        function validarEnviarFormulario() {
+
+            if (selectSlim instanceof SlimSelect) {
+                const val = selectSlim.getSelected()?.[0] || '';
+                const info = clientesMap.get(val);
+                $("#Usuario").val(info ? info.code : "");
+                $("#NombreReal").val(info ? info.name : val);
+            } else {
+                $("#NombreReal").val($("#Nombre").val());
+            }
+
+            const object = $("#NuevoUsuario").serialize();
+
+            $.ajax({
+                url: '/Usuario/validarNuevoUsuario',
+                type: 'POST',
+                data: object,
+                dataType: 'text',
+                cache: false,
+                success: function (response) {
+                    if (response !== "true") {
+                        Swal.fire({
+                            title: "Atención",
+                            text: response,
+                            icon: "warning",
+                            confirmButtonText: "OK"
+                        });
+                    } else {
+                        $("#NuevoUsuario").off('submit').submit();
+                    }
+                },
+                error: function () {
+                    Swal.fire({
+                        title: "Error",
+                        text: "Ocurrió un problema al validar los datos.",
+                        icon: "error"
+                    });
+                }
+            });
+        }
+
+        // ===== Modales =====
+        function abrirModalCrearUsuario() {
+            bootstrap.Modal.getOrCreateInstance('#modalNuevoUsuario').show();
+        }
+
+        function cerrarModalCrearUsuario() {
+            const el = document.getElementById('modalNuevoUsuario');
+            const modal = bootstrap.Modal.getInstance(el) || bootstrap.Modal.getOrCreateInstance(el);
+            modal.hide();
+            el.querySelector('form')?.reset();
+        }
+
+        // ===== Reset contraseña =====
+        function confirmarReset(id) {
+            Swal.fire({
+                title: '¿Está seguro?',
+                text: 'Se reseteará la contraseña del usuario.',
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, resetear',
+                cancelButtonText: 'Cancelar'
+            }).then(result => {
+                if (result.isConfirmed) {
+                    mostrarModalReset(id);
+                }
+            });
+
+            return false;
+        }
+
+        function mostrarModalReset(id) {
+            fetch('/Usuario/ObtenerDatosResetearContraseña', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ id })
+            })
+                .then(res => res.json())
+                .then(data => {
+                    if (data.error) {
+                        Swal.fire("Error", data.error, "error");
+                        return;
+                    }
+
+                    $('#modalTipo').val(data.NombreTipoUsuario);
+                    $('#modalUsuario').val(data.Usuario);
+                    $('#modalNombre').val(data.Nombre);
+                    $('#modalContrasena').val(data.NuevaContrasena);
+
+                    bootstrap.Modal.getOrCreateInstance('#modalDatosCliente').show();
+                })
+                .catch(() => {
+                    Swal.fire("Error", "Error inesperado.", "error");
+                });
+        }
+    </script>
+
+}

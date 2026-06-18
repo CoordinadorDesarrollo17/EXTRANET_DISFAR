@@ -1,0 +1,70 @@
+@charset "utf-8";
+@import url('https://fonts.googleapis.com/css2?family=Rubik&display=swap');
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    font-family: 'Rubik', sans-serif;
+}
+body, html {
+    height: 100%;
+}
+body {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding-top: 20px;
+    background: #8bb915 url(../Content/img/Fondo-Cobefar.png);
+    background-position: center center;
+    background-attachment: fixed;
+    -webkit-background-size: cover;
+    -moz-background-size: cover;
+    -o-background-size: cover;
+    background-size: cover;
+    background-size: 100% 100%;
+}
+/* Columna derecha con formulario */
+.login-right {
+    background-color: #fff;
+    opacity: 0.95;
+    box-shadow: rgba(0, 0, 0, 0.2) 0px 10px 20px;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Caja del formulario */
+.login-box {
+    max-width: 400px;
+    width: 100%;
+    padding: 2.5rem;
+}
+
+/* Botones y campos */
+.form-control.border-success {
+    border-color: #198754 !important;
+}
+
+.btn-success {
+    background-color: #198754;
+    border-color: #198754;
+}
+
+    .btn-success:hover {
+        background-color: #146c43;
+        border-color: #146c43;
+    }
+
+.btn-outline-success {
+    border-color: #198754;
+    color: #198754;
+}
+
+    .btn-outline-success:hover {
+        background-color: #198754;
+        color: #fff;
+    }
+.form-control {
+    width: 100%;
+}

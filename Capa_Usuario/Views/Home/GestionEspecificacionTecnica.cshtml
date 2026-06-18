@@ -1,0 +1,81 @@
+﻿@model Capa_Entidad.Inventario_ENT.TablasSql.EspecificacionesTecnicas_E
+@{
+    ViewBag.Title = "GestionEspecificacionTecnica";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<script>
+    $(document).ready(function () { });
+    function listarArticulos(dom) {
+        if ($(dom).val().length > 3) {
+            $.ajax('/Home/DataListArticulos',
+                {
+                    data: { "ItemName": $(dom).val(), "ItemCode": $(dom).val(), "FirmCode": $("#FirmCode").val() },
+                    dataType: 'html',
+                    cache: false,
+                    type: 'post',
+                })
+                .done(function (response) {
+                    $('#listaArticulos').html(response);
+                });
+        }
+    }
+    function completaCampos(dom) {
+        var FirmCode = $("#listaArticulos option[value='" + $(dom).val() + "']").attr("FirmCode")
+        var ItemName = $("#listaArticulos option[value='" + $(dom).val() + "']").attr("ItemName")
+        $("#ItemName").val(ItemName);
+        $("#FirmCode").val(FirmCode);
+    }
+</script>
+<style>
+    table {
+        text-align: center;
+    }
+    td {
+        padding: 10px;
+        font-size: 14px;
+    }
+</style>
+<a style="float:left;" href="@Url.Action("GestionDocumentos", "Home")" class="btn btn-secondary">
+    <i class="icon-arrow-bold-left"></i>
+    <span>Regresar</span>
+</a>
+<br />
+<br />
+<div id="bodyform">
+    <div class="m-0 row justify-content-center align-items-center">
+        @using (Html.BeginForm("GestionEspecificacionTecnica", "Home", FormMethod.Post, new { @enctype = "multipart/form-data" }))
+        {
+            @Html.AntiForgeryToken()
+            <h5 id="resaltado">Especificaciones Técnicas</h5>
+            <table>
+                <tr>
+                    <td>
+                        <input type="search" name="ItemCode" id="ItemCode" list="listaArticulos" oninput="listarArticulos(this);completaCampos(this);" class="form-control" autocomplete="off" placeholder="Buscar articulo*" />
+                        <datalist id="listaArticulos"></datalist>
+                        <input type="text" name="ItemName" id="ItemName" readonly class="form-control" placeholder="Codigo de articulo" />
+                        <input type="hidden" name="FirmCode" id="FirmCode" readonly />
+                    </td>
+                </tr>
+                <tr>
+                    <td><input accept=".pdf" class="form-control" id="ArchivoPdf" name="ArchivoPdf" type="file" value=""></td>
+                </tr>
+                <tr>
+                    <td>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-cloud-arrow-up-fill"></i>  Cargar Archivo
+                        </button>
+                    </td>
+                </tr>
+            </table>
+        }
+    </div>
+</div>
+<script>
+    if ('@ViewBag.mensaje' != "") {
+        swal.fire({
+            title: "@ViewBag.mensaje",
+            text: "Verifique campos",
+            icon: "warning"
+        })
+    };
+</script>

@@ -1,0 +1,36 @@
+﻿@model List<Capa_Entidad.Transacciones_ENT.TablasSql.Factura_E>
+
+<table id="tablaComprobantes" class="table table-hover align-middle">
+    <thead class="text-center encabezado-verde">
+        <tr>
+            <th class="text-center">Codigo</th>
+            <th class="text-center">Cliente</th>
+            <th class="text-center">Correlativo</th>
+            <th class="text-center">Fecha</th>
+            <th class="text-center">Total</th>
+            <th class="text-center">Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model != null && Model.Count > 0)
+        {
+            foreach (var item in Model)
+            {
+                <tr>
+                    <td class="text-center">@item.CardCode</td>
+                    <td class="text-start">@item.CardName</td>
+                    <td class="text-center">@item.Correlativo</td>
+                    <td class="text-center">@item.DocDate</td>
+                    <td class="text-center">@item.DocTotal.ToString("N2")</td>
+                    <td class="text-center">
+                        <button type="button"
+                                class="btn btn-sm btn-primary d-inline-flex align-items-center gap-1"
+                                onclick="verDetalleComprobante(@item.DocEntry)">
+                            <i class="bi bi-eye"></i> Ver
+                        </button>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>

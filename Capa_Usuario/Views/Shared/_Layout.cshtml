@@ -1,0 +1,264 @@
+﻿@using Capa_Entidad.Seguridad_ENT.TablasSql
+@using Capa_Negocio.Seguridad_NEG.TablasSql
+@{
+    MenuOpciones_N oemeN = new MenuOpciones_N();
+    Usuario_E user = (Usuario_E)Session["Usuario"];
+    List<MenuOpciones_E> OpcionesMenu = oemeN.ListarOpcionesMenu(user.TipoUsuarioId);
+    if (OpcionesMenu == null) { OpcionesMenu = new List<MenuOpciones_E>(); }
+}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>@ViewBag.Title - COBEFAR</title>
+    <link rel="icon" type="image/x-icon" href="~/Content/img/favicon-cobefar.png">
+    <!-- Bootstrap 5.3.2 -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+    <!--Estilos y librerías adicionales -->
+    <link href="~/Content/estilos.css" rel="stylesheet" />
+    <link href="~/Content/Iconos/fonts/style.css" rel="stylesheet" />
+    <link href="~/Content/alertify.min.css" rel="stylesheet" />
+    <link href="~/Content/themes/default.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.css" />
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/slim-select@2.8.2/dist/slimselect.css" />
+
+    <!--Scripts -->
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="~/Scripts/sweetalert2@11.js"></script>
+    <script src="~/Scripts/alertify.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/slim-select@2.8.2/dist/slimselect.min.js"></script>
+</head>
+<body>
+    <header>
+        <div class="header-contenedor">
+            <img src="~/Imagenes/logo.jpg" alt="Logo" width="200" class="logo-izquierda" />
+            <input type="checkbox" id="menu-bar" />
+            <label class="icon-th-menu" for="menu-bar"></label>
+
+            <nav class="menu">
+                @foreach (var o in OpcionesMenu)
+                {
+                    if (o.Id == 4)
+                    {
+                        <a href="#" class="abrirModalContrasena">@o.Descripcion</a>
+                    }
+                    else
+                    {
+                        <a href="@Url.Action(o.NombreOperacion, o.NombreControlador)">@o.Descripcion</a>
+                    }
+                }
+            </nav>
+        </div>
+    </header>
+
+    <main class="main-container my-4">
+        <!-- Íconos sociales flotantes -->
+        <div class="social-floating">
+            <a class="social-icon facebook" href="https://www.facebook.com/people/Cobefar-S-A-C/100054227091988/" target="_blank" title="Facebook">
+                <i class="bi bi-facebook"></i>
+            </a>
+            <a class="social-icon linkedin" href="https://pe.linkedin.com/company/cobefar" target="_blank" title="LinkedIn">
+                <i class="bi bi-linkedin"></i>
+            </a>
+            <a class="social-icon mail" href="mailto:direcciontecnica@cobefar.com.pe" title="Correo">
+                <i class="bi bi-envelope-at-fill"></i>
+            </a>
+        </div>
+        <div class="modal fade" id="modalActualizarContrasena" tabindex="-1" aria-labelledby="modalActualizarContrasenaLabel" aria-hidden="true">
+            <div class="modal-dialog modal-dialog-centered" style="max-width: 450px;">
+                <div class="modal-content">
+
+                    <div class="modal-header bg-green-gradient">
+                        <h5 class="modal-title" id="modalActualizarContrasenaLabel">Actualización de Contraseña</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+                    </div>
+
+                    <div class="modal-body">
+                        @using (Html.BeginForm("ActualizarContrasena", "Usuario", FormMethod.Post, new { id = "ActualizarContrasena" }))
+                        {
+                            @Html.AntiForgeryToken()
+                            @Html.ValidationSummary(true, "", new { @class = "text-danger" })
+
+                            if (user != null)
+                            {
+                                <input type="hidden" name="Id" value="@user.Id" />
+                            }
+
+                            <div class="mb-3 input-group">
+                                <input id="txtPassword1" class="form-control" type="password" placeholder="Ingrese su contraseña actual" name="Contrasena" autocomplete="off" />
+                                <button class="btn btn-outline-primary" type="button" onclick="mostrarPassword1(this)">
+                                    <i class="fa fa-eye-slash"></i>
+                                </button>
+                            </div>
+
+                            <div class="mb-3 input-group">
+                                <input id="txtPassword2" class="form-control" type="password" placeholder="Ingrese su nueva contraseña" name="NuevaContrasena" autocomplete="off" />
+                                <button class="btn btn-outline-primary" type="button" onclick="mostrarPassword2(this)">
+                                    <i class="fa fa-eye-slash"></i>
+                                </button>
+                            </div>
+
+                            <div class="mb-3 input-group">
+                                <input id="txtPassword3" class="form-control" type="password" placeholder="Repita su nueva contraseña" name="NuevaContrasena2" autocomplete="off" />
+                                <button class="btn btn-outline-primary" type="button" onclick="mostrarPassword3(this)">
+                                    <i class="fa fa-eye-slash"></i>
+                                </button>
+                            </div>
+
+                            <p class="text-danger" style="font-size: 13px;">
+                                La nueva contraseña debe tener entre 6 y 12 caracteres e incluir solo los caracteres especiales: <strong>#&$*@@</strong>.
+                                <br />Recuerde llenar todos los campos.
+                            </p>
+
+                            <div class="text-center">
+                                <button type="button" class="btn btn-primary" onclick="validarEnviarContrasena();">Guardar Contraseña</button>
+                            </div>
+                        }
+                    </div>
+
+                    
+                </div>
+            </div>
+        </div>
+        <!-- Usuario actual -->
+        <div style="display: flex; justify-content: flex-end;">
+            <p id="resaltado" style="white-space: nowrap;">
+                @user.Nombre&nbsp;<span class="icon-user"></span>
+            </p>
+        </div>
+
+        @RenderBody()
+    </main>
+
+    <footer class="bg-dark text-white text-center py-3 mt-auto">
+        <div class="container-">
+            <p id="resaltado">COBEFAR S.A.C - Todos los derechos reservados &copy; @DateTime.Now.Year</p>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    @*<script src="~/js/site.js"></script>*@
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.min.css" />
+    <script src="https://cdn.datatables.net/2.1.8/js/dataTables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script type="text/javascript">
+        history.forward()
+        // Función genérica para inicializar Slim Select en todos los <select> con una clase espec�fica
+        const inicializarSlimSelects = (clase) => {
+            const elementos = document.querySelectorAll(`.${clase}`);
+            if (!elementos.length) {
+                //console.log(`No se encontraron elementos con la clase: "${clase}"`);
+                return;
+            }
+            elementos.forEach(elemento => {
+                if (elemento.tagName.toLowerCase() !== 'select') {
+                    //console.log(`El elemento con clase "${clase}" no es un <select>.`, elemento);
+                    return;
+                }
+                // Verificar si SlimSelect ya fue inicializado en este elemento
+                if (elemento.slim) {
+                    elemento.slim.destroy();  // Destruir la instancia previa antes de inicializar
+                    elemento.slim = null; // Limpiar la referencia para evitar problemas
+                }
+                if (elemento.tagName.toLowerCase() === 'select' && !elemento.slim) {
+                    new SlimSelect({
+                        select: elemento,
+                        placeholder: 'Selecciona una opción', // Texto de marcador de posición en español
+                        allowDeselect: true, // Permite deseleccionar
+                        searchText: 'No encontrado', // Texto que aparece cuando no hay coincidencias en la búsqueda
+                        searchPlaceholder: 'Buscar...', // Texto de marcador de posición para la búsqueda
+                        closeOnSelect: false, // No cerrar el desplegable al seleccionar (opcional)
+                        showSearch: true // Mostrar la barra de búsqueda
+                    });
+                }
+            });
+        };
+
+        document.querySelectorAll('.menu-link').forEach(link => {
+            link.addEventListener('click', () => {
+                const controller = link.dataset.controller;
+                const action = link.dataset.action;
+                const url = `/${controller}/${action}`;
+                window.location.href = url; // o usar pushState si manejas SPA
+            });
+        });
+
+        document.addEventListener("DOMContentLoaded", function () {
+            const enlaces = document.querySelectorAll(".abrirModalContrasena");
+
+            enlaces.forEach(function (enlace) {
+                enlace.addEventListener("click", function (e) {
+                    e.preventDefault();
+                    const modal = new bootstrap.Modal(document.getElementById('modalActualizarContrasena'));
+                    modal.show();
+                });
+            });
+        });
+
+        function validarEnviarContrasena() {
+            var object = $("#ActualizarContrasena").serialize();
+            $.ajax('/Usuario/validarNuevaContrasena',
+                {
+                    data: object,
+                    dataType: 'html',
+                    cache: false,
+                    type: 'post'
+                })
+                .done(function (response) {
+                    if (response != "true") { swal.fire({ title: response, text: "Presione OK para continuar", icon: "warning" }); return false }
+                    else { $("#ActualizarContrasena").submit(); }
+                });
+        }
+        function mostrarPassword1(btn) {
+            var cambio = document.getElementById("txtPassword1");
+            var icon = btn.querySelector('i'); 
+
+            if (cambio.type === "password") {
+                cambio.type = "text";
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            } else {
+                cambio.type = "password";
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            }
+        }
+        function mostrarPassword2(btn) {
+            var cambio = document.getElementById("txtPassword2");
+            var icon = btn.querySelector('i');
+
+            if (cambio.type === "password") {
+                cambio.type = "text";
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            } else {
+                cambio.type = "password";
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            }
+        }
+        function mostrarPassword3(btn) {
+            var cambio = document.getElementById("txtPassword3");
+            var icon = btn.querySelector('i');
+
+            if (cambio.type === "password") {
+                cambio.type = "text";
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            } else {
+                cambio.type = "password";
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            }
+        }
+    </script>
+
+    @RenderSection("scripts", required: false)
+</body>
+</html>

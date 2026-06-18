@@ -1,0 +1,96 @@
+﻿@model Capa_Entidad.Seguridad_ENT.TablasSql.Usuario_E
+@{
+    ViewBag.Title = "Index";
+    Layout = null;
+}
+<script>
+    function mostrarPassword() {
+        const cambio = document.getElementById("txtPassword");
+        const icon = document.querySelector('.icon');
+        if (cambio.type === "password") {
+            cambio.type = "text";
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        } else {
+            cambio.type = "password";
+            icon.classList.remove('fa-eye');
+            icon.classList.add('fa-eye-slash');
+        }
+    }
+</script>
+<!-- Solo Bootstrap 5.3.2 desde CDN -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css">
+
+<!-- Estilos personalizados -->
+<link href="~/Content/estilos.css" rel="stylesheet" type="text/css" />
+<link href="~/Content/index.css" rel="stylesheet" type="text/css" />
+
+<!--Alertify CSS -->
+<link href="~/Content/alertify.min.css" rel="stylesheet" />
+<link href="~/Content/themes/default.min.css" rel="stylesheet" />
+
+<!-- Íconos -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+
+<!-- Scripts -->
+<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+<script src="~/Scripts/sweetalert2@11.js"></script>
+<script src="~/Scripts/alertify.min.js"></script>
+
+<body class="bg-light">
+    <div class="row g-0" style="min-height: auto;">
+        <!-- Lado Izquierdo con imagen o video -->
+        <div class="col-lg-6 d-flex align-items-end position-relative" style="box-shadow: rgba(0,0,0,0.2) 0px 10px 20px;">
+            <img src="~/Imagenes/fondo-login.png" alt="Fondo"
+                 style="top:100%; left:0; width:100%; height:100%; object-fit:cover;">
+        </div>
+
+        <!-- Lado Derecho con formulario -->
+        <div class="col-lg-6 d-flex align-items-center justify-content-center bg-white"
+             style="opacity: 0.95; box-shadow: rgba(0,0,0,0.2) 0px 10px 20px;">
+            <div class="p-5" style="max-width: 400px; width: 100%;">
+                <div class="text-center mb-4">
+                    <img src="~/Imagenes/logo.jpg" alt="Logo" class="img-fluid" width="240" height="80" />
+                    <h6 class="mt-3 text-muted">Ingrese sus credenciales</h6>
+                </div>
+
+                @using (Html.BeginForm("Logueo", "Usuario", FormMethod.Post))
+                {
+                    @Html.AntiForgeryToken()
+                    @Html.ValidationSummary(true, "", new { @class = "text-danger text-center" })
+
+                    <div class="mb-3">
+                        <input class="form-control form-control-lg " type="text" placeholder="Ingrese su RUC o Usuario" name="Usuario" autocomplete="off" />
+                    </div>
+
+                    <div class="mb-3 input-group">
+                        <input id="txtPassword" class="form-control form-control-lg " type="password" placeholder="Ingrese su contraseña" name="Contrasena" autocomplete="off" />
+                        <button id="show_password" class="btn btn-outline-primary" type="button" onclick="mostrarPassword()">
+                            <i class="fa fa-eye-slash icon"></i>
+                        </button>
+                    </div>
+
+                    <div class="d-grid">
+                        <input type="submit" value="Ingresar" class="btn btn-success btn-lg shadow-sm" />
+                    </div>
+
+                    <p class="mt-3 text-center text-muted" style="font-size: 0.9rem;">
+                        ¿Problemas para acceder?<br>
+                        <b>direcciontecnica@cobefar.com.pe</b>
+                    </p>
+                }
+            </div>
+        </div>
+    </div>
+</body>
+    
+<script>
+    if ('@ViewBag.mensaje' != "") {
+        alertify.error('@ViewBag.mensaje');
+    }
+
+    if ('@TempData["Mensaje"]' != "") {
+    Swal.fire('@TempData["Mensaje"]');
+    }
+</script>

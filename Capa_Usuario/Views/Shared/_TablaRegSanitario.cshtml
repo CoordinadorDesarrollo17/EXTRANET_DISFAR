@@ -1,0 +1,60 @@
+﻿@model List<Capa_Entidad.Inventario_ENT.TablasSql.RegistrosSanitarios_E>
+
+<table id="tablaRegSanitarios" class="table table-hover">
+    <thead class="encabezado-verde text-center">
+        <tr>
+            <th class="text-center">Codigo Reg. San.</th>
+            <th class="text-center">Nombre Articulo</th>
+            <th class="text-center">Operador de Carga</th>
+            <th class="text-center">Fecha de Carga</th>
+            <th class="text-center">Acciones</th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (Model != null && Model.Any())
+        {
+            foreach (var item in Model)
+            {
+                <tr>
+                    <td class="text-center">@item.MnfSerial</td>
+                    <td class="text-center">@(item.ItemName ?? "N/A")</td>
+                    <td class="text-center">@item.OpCarga</td>
+                    <td class="text-center">@item.TiempoCarga.ToString("yyyy-MM-dd HH:mm")</td>
+                    <td class="text-center">
+                        @if (!string.IsNullOrEmpty(item.RutaArchivo))
+                        {
+                            <a href="javascript:void(0);"
+                               class="btn btn-sm btn-outline-primary"
+                               onclick="verPDF('@Url.Action("DocumentoRegSanitarioPDF", "Documentos", new { id = item.MnfSerial})')">
+                                <i class="bi bi-eye"></i> Ver
+                            </a>
+                        }
+                        else
+                        {
+                            <button type="button"
+                                    class="btn btn-sm btn-outline-secondary"
+                                    disabled
+                                    title="No existe documento cargado">
+                                <i class="bi bi-eye-slash"></i> Ver
+                            </button>
+                        }
+
+                        <button type="button"
+                                class="btn btn-sm btn-outline-danger ms-1"
+                                onclick="eliminarRegSanitario('@item.MnfSerial',this)">
+                            <i class="bi bi-trash"></i> Eliminar
+                        </button>
+                    </td>
+                </tr>
+            }
+        }
+        else
+        {
+            <tr>
+                <td colspan="5" class="text-center text-muted py-4">
+                    <i class="bi bi-inbox"></i> No se encontraron registros con los criterios de búsqueda.
+                </td>
+            </tr>
+        }
+    </tbody>
+</table>

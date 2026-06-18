@@ -1,0 +1,24 @@
+﻿@model IEnumerable<Capa_Entidad.Seguridad_ENT.TablasSql.Usuario_E>
+@{
+    ViewBag.Title = "SesionUsuario";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<div class="container-fluid">
+    <div class="container">
+        <br />
+        <h5 id="resaltado">Manual de Usuario</h5><br />
+        <a href="@Url.Action("Manual", "Documentos")" class="btn btn-warning">
+            <i class="icon-download"></i>
+            <span><strong>Descargue su Manual</strong></span>
+        </a>
+    </div>
+</div>
+    <script>
+    if ('@ViewBag.mensaje' != "") {
+        swal.fire({
+            title: "@ViewBag.mensaje",
+            text: "",
+            icon: "succes"
+        })
+    };
+    </script>

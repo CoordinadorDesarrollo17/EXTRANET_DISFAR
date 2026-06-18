@@ -1,0 +1,142 @@
+﻿@model PagedList.IPagedList<Capa_Entidad.Seguridad_ENT.TablasSql.Usuario_E>
+    @using PagedList.Mvc;
+    @using Capa_Entidad.Seguridad_ENT.TablasSql;
+
+    @{
+    ViewBag.Title = "GestionUsuarios";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    Usuario_E ousrE = new Usuario_E();
+    }
+
+    <script>
+        $(document).ready(function () { });
+
+        function filtrar() {
+            var object = $("#frm").serialize();
+            $(location).attr('href', "/Usuario/GestionUsuarios?" + object);
+        }
+    </script>
+
+    <style>
+        #usuarios {
+            background-color: rgb(220, 220, 220, 1);
+            padding-bottom: 1%;
+            font-size: 14px;
+        }
+    </style>
+
+    <div style="float:left">
+        <a href="@Url.Action(" SesionUsuario", "Usuario" )" class="btn btn-secondary">
+            <i class="icon-arrow-bold-left"></i> Regresar
+        </a>
+        <a href="@Url.Action(" NuevoUsuario", "Usuario" )" class="btn btn-success">
+            Nuevo Usuario
+        </a>
+    </div>
+    <br />
+    <br />
+    <br />
+
+    <form name="frm" id="frm">
+        <div id="usuarios" class="container-fluid">
+            <table id="tablaUsuarios" class="table table-hover table-responsive table-sm container-fluid">
+                <tr>
+                    <th>
+                        Usuario<br />
+                        <input class="form-control" type="text" name="Usuario" style="font-size: 12px; height: 25px"
+                               onchange="filtrar();" value="@ViewBag.fil.Usuario" />
+                    </th>
+                    <th>
+                        Tipo de Usuario<br />
+                        <input class="form-control" type="text" name="NombreTipoUsuario" style="font-size: 12px; height: 25px"
+                               onchange="filtrar();" value="@ViewBag.fil.NombreTipoUsuario" />
+                    </th>
+                    <th>
+                        Nombre o Razon Social<br />
+                        <input class="form-control" type="text" name="Nombre" style="font-size: 12px; height: 25px"
+                               onchange="filtrar();" value="@ViewBag.fil.Nombre" />
+                    </th>
+                    <th> </th>
+                </tr>
+                @foreach (var item in Model)
+                {
+                <tr>
+                    <td style="text-align:justify;">
+                        @Html.DisplayFor(modelItem => item.Usuario)
+                    </td>
+                    <td style="text-align: justify;">
+                        @item.NombreTipoUsuario
+                    </td>
+                    <td style="text-align: justify;">
+                        @Html.DisplayFor(modelItem => item.Nombre)
+                    </td>
+                    <td style="text-align: justify;">
+                        @Html.ActionLink("Resetear Contraseña", "ResetearContraseña","Usuario", new { id = item.Usuario },
+                        new { onclick = "return confirm('Esta seguro de resetear?');", @class = "btn btn-info" })
+                    </td>
+                </tr>
+                }
+            </table>
+
+            <div class="d-flex justify-content-center mt-3">
+                @Html.PagedListPager(Model, page => Url.Action("GestionUsuarios", new { page }), new PagedListRenderOptions
+                {
+                UlElementClasses = new[] { "pagination", "pagination-sm" },
+                LiElementClasses = new[] { "page-item" },
+                DisplayLinkToFirstPage = PagedListDisplayMode.Always,
+                DisplayLinkToLastPage = PagedListDisplayMode.Always,
+                DisplayLinkToPreviousPage = PagedListDisplayMode.Always,
+                DisplayLinkToNextPage = PagedListDisplayMode.Always,
+                MaximumPageNumbersToDisplay = 5,
+                DisplayEllipsesWhenNotShowingAllPageNumbers = true
+                })
+            </div>
+        </div>
+    </form>
+
+    <style>
+        .pagination {
+            margin-top: 20px;
+        }
+
+            .pagination .page-item .page-link {
+                color: #007bff;
+                border-radius: 5px;
+                margin: 3px;
+            }
+
+            .pagination .page-item.active .page-link {
+                background-color: #007bff;
+                color: white;
+                border: none;
+            }
+
+            .pagination .page-item.disabled .page-link {
+                color: #6c757d;
+            }
+    </style>
+
+    <script src="https://cdn.datatables.net/2.1.8/js/dataTables.js"></script>
+    <script>
+        function confirmar() {
+            alertify.confirm("This is a confirm dialog.",
+                function () {
+                    alertify.success('Ok');
+                },
+                function () {
+                    alertify.error('Cancel');
+                });
+        }
+
+        $(document).ready(function () {
+            $('#tablaUsuarios').DataTable({
+                paging: true,
+                ordering: true,
+                info: true,
+                searching: false,
+                language: {
+                    url: '//cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json'
+                }
+            });
+        });
+    </script>

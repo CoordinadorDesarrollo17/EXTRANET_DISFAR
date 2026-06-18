@@ -1,0 +1,783 @@
+﻿@model List<Capa_Entidad.Inventario_ENT.TablasSql.RegistrosSanitarios_E>
+@{
+    ViewBag.Title = "Gestion de Registro Sanitario";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+    var seriales = ViewBag.SerialesDisponibles as List<Capa_Entidad.Inventario_ENT.TablasHana.OBTN_E>;
+}
+<style>
+    table {
+        text-align: center;
+    }
+
+    td {
+        padding: 10px;
+        font-size: 14px;
+    }
+
+    /* Estilo para botón deshabilitado (sin PDF) */
+    .btn-outline-secondary:disabled {
+            cursor: not-allowed !important;
+  opacity: 0.6;
+        background-color: #f8f9fa;
+    border-color: #dee2e6;
+          color: #6c757d;
+        }
+
+    .btn-outline-secondary:disabled:hover {
+            background-color: #f8f9fa;
+        border-color: #dee2e6;
+   color: #6c757d;
+    }
+</style>
+
+
+<div class="row">
+    <div class="col-lg-12 pt-4">
+        <div class="border-cabecera-seccion bg-cobefar-degradado-1 pb-2">
+            <div class="row px-3 pt-3"><h3 class="titulo-seccion">@ViewBag.Title.ToUpper()</h3></div>
+            <div class="row px-3 pt-3">
+                <div class="col-lg-12">
+                    <div class="d-flex flex-wrap align-items-start gap-2">
+                        <a style="float:left;" href="@Url.Action("GestionDocumentos", "Documentos")" class="btn btn-secondary">
+                            <i class="icon-arrow-bold-left"></i>
+                            <span>Regresar</span>
+                        </a>
+                        <button type="button" class="btn btn-primary" onclick="abrirModalRegSanitario()">
+                            <i class="bi bi-file-earmark-plus"></i> Nuevo Reg Sanitario
+                        </button>
+                        <button type="button" class="btn btn-info text-white" onclick="abrirModalReporteSanitario()">
+                            <i class="bi bi-file-earmark-bar-graph"></i> Reporte Sanitarios
+                        </button>
+                        <button type="button" id="btn_filtrar" class="btn btn-light" onclick="abrirModalFiltros()">
+                            <i class="bi bi-filter"></i> Filtrar
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="bg-white px-3 py-3 align-items-center">
+            <div class="row justify-content-center">
+                <div class="col">
+    <!-- ✅ NUEVO: Filtros rápidos de búsqueda -->
+      <div class="row mb-3 g-2">
+            <div class="col-md-5">
+         <label for="busquedaRapidaSerial" class="form-label text-muted small mb-1">
+   <i class="bi bi-search"></i> Buscar por Código Reg. San.
+         <span id="indicadorSerial" class="spinner-border spinner-border-sm text-primary ms-2 d-none" role="status"></span>
+</label>
+ <input type="text" 
+          id="busquedaRapidaSerial" 
+                   class="form-control form-control-sm" 
+        placeholder="Escriba el código y presione Enter...">
+      </div>
+         <div class="col-md-5">
+    <label for="busquedaRapidaNombre" class="form-label text-muted small mb-1">
+             <i class="bi bi-search"></i> Buscar por Nombre de Artículo
+            <span id="indicadorNombre" class="spinner-border spinner-border-sm text-primary ms-2 d-none" role="status"></span>
+        </label>
+        <input type="text" 
+               id="busquedaRapidaNombre" 
+            class="form-control form-control-sm" 
+          placeholder="Escriba el nombre y presione Enter...">
+                </div>
+       <div class="col-md-2 d-flex align-items-end">
+          <button type="button" 
+                class="btn btn-sm btn-outline-secondary w-100" 
+         onclick="limpiarBusquedaRapida()"
+                 title="Limpiar búsqueda">
+              <i class="bi bi-x-circle"></i> Limpiar
+          </button>
+      </div>
+    </div>
+
+            <div class="table-responsive">
+      <div id="div_listado" class="container-fluid p-3">
+           <table id="tablaRegSanitarios" class="table table-hover">
+      <thead class="encabezado-verde text-center">
+     <tr>
+         <th class="text-center">Codigo Reg. San.</th>
+  <th class="text-center">Nombre Articulo</th>
+       <th class="text-center">Operador de Carga</th>
+             <th class="text-center">Fecha de Carga</th>
+     <th class="text-center">Acciones</th>
+         </tr>
+           </thead>
+             <tbody>
+         @if (Model != null && Model.Any())
+      {
+                 foreach (var item in Model)
+     {
+         <tr>
+       <td class="text-center">@item.MnfSerial</td>
+       <td class="text-center">@(item.ItemName ?? "N/A")</td>
+         <td class="text-center">@item.OpCarga</td>
+           <td class="text-center">@item.TiempoCarga.ToString("yyyy-MM-dd HH:mm")</td>
+      <td class="text-center">
+      @if (!string.IsNullOrEmpty(item.RutaArchivo))
+          {
+         <a href="javascript:void(0);"
+     class="btn btn-sm btn-outline-primary"
+  onclick="verPDF('@Url.Action("DocumentoRegSanitarioPDF", "Documentos", new { id = item.MnfSerial})')">
+      <i class="bi bi-eye"></i> Ver
+     </a>
+     }
+            else
+{
+     <button type="button"
+         class="btn btn-sm btn-outline-secondary"
+       disabled
+             title="No existe documento cargado">
+                <i class="bi bi-eye-slash"></i> Ver
+       </button>
+         }
+
+   <button type="button"
+     class="btn btn-sm btn-outline-danger ms-1"
+           onclick="eliminarRegSanitario('@item.MnfSerial',this)">
+         <i class="bi bi-trash"></i> Eliminar
+               </button>
+            </td>
+         </tr>
+  }
+     }
+            </tbody>
+    </table>
+   </div>
+     </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal -->
+<div class="modal fade" id="modalRegistroSanitario" tabindex="-1" aria-labelledby="modalRegistroSanitarioLabel" aria-hidden="true" data-bs-focus="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-green-gradient">
+                <h5 class="modal-title" id="modalRegistroSanitarioLabel">Registro Sanitario</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+
+            <div class="modal-body">
+                @using (Html.BeginForm("GestionRegistroSanitario", "Documentos", FormMethod.Post, new { enctype = "multipart/form-data" }))
+                {
+                    <div class="mb-3">
+                        <label for="ArchivoPdf" class="form-label">Archivo PDF</label>
+                        <input type="file" accept=".pdf" class="form-control" id="ArchivoPdf" name="ArchivoPdf" />
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="MnfSerial" class="form-label">Mnf Serial</label>
+                        <select id="MnfSerial" name="MnfSerial">
+                        </select>
+                    </div>
+
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-cloud-arrow-up-fill"></i> Cargar Archivo
+                        </button>
+                    </div>
+
+                    <div class="form-text mt-2 text-danger">
+                        *Solo se admite la carga de archivos .pdf (10 MB máx.)
+                    </div>
+                }
+            </div>
+
+        </div>
+    </div>
+</div>
+<!--Modal Filtro-->
+<div class="modal fade" id="modalRegSanitario" tabindex="-1" aria-labelledby="modalFiltrosLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-green-gradient">
+                <h5 class="modal-title" id="modalFiltrosLabel">Filtrar Reg Sanitario</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+
+            <div class="modal-body">
+                <div class="row g-3">
+                    <div class="col-md-6">
+                        <label for="filtroSerial" class="form-label">Serial</label>
+                        <input type="text" class="form-control" id="filtroSerial" name="filtroSerial">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="filtroItemName" class="form-label">Nombre Artículo</label>
+                        <input type="text" class="form-control" id="filtroItemName" name="filtroItemName">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="filtroOpCarga" class="form-label">Operador de Carga</label>
+                        <input type="text" class="form-control" id="filtroOpCarga" name="filtroOpCarga">
+                    </div>
+                    <div class="col-md-6">
+                        <label for="filtroFechaC" class="form-label">Fecha de Carga</label>
+                        <input type="date" class="form-control" id="filtroFechaC" name="filtroFechaC">
+                    </div>
+                </div>
+            </div>
+
+            <div class="modal-footer">
+                <button type="button" class="btn btn-outline-secondary" onclick="aplicarFiltros(true)">Cancelar</button>
+                <button type="button" class="btn btn-success" onclick="aplicarFiltros()">Aplicar Filtros</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--Modal visor Pdf-->
+<div class="modal fade" id="modalVisorPDF" tabindex="-1" aria-labelledby="tituloModalPDF" aria-hidden="true">
+    <div class="modal-dialog modal-xl modal-dialog-centered modal-dialog-scrollable">
+        <div class="modal-content" style="height: 90vh;">
+            <div class="modal-header bg-green-gradient text-white">
+                <h5 class="modal-title" id="tituloModalPDF">Visor de Registro Sanitario</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+            <div class="modal-body p-0">
+                <div id="pdf-render-container" style="width: 100%; height: calc(90vh - 120px); overflow: auto; background-color: #525659; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; padding: 20px;">
+                    <!-- Aquí se renderizarán todas las páginas -->
+                </div>
+            </div>
+            <div class="modal-footer bg-light d-flex justify-content-between align-items-center">
+                <span id="pdfInfo" class="text-muted small"></span>
+                <button type="button" class="btn btn-success btn-sm" onclick="descargarPDF()">
+                    <i class="bi bi-download"></i> Descargar PDF
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="modalReporteSanitario" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">
+                    <i class="bi bi-file-medical"></i> Reporte de Registros Sanitarios
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+            </div>
+
+            @using (Html.BeginForm("DescargarReporteRegSanitario", "Reportes", FormMethod.Post, new { id = "formReporteSanitario" }))
+            {
+                <div class="modal-body">
+                    <div class="alert alert-light border" role="alert">
+                        <small class="text-muted"><i class="bi bi-info-circle"></i> El rango de fechas no puede exceder los días naturales del mes seleccionado (30/31 días).</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="txtUsuarioSanitario" class="form-label fw-bold">Usuario</label>
+                        <input type="text" class="form-control" name="opCarga" id="txtUsuarioSanitario" placeholder="Opcional">
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="txtFechaInicioSanitario" class="form-label fw-bold">Fecha Inicio*</label>
+
+                            <input type="date" class="form-control" name="fechaInicio" id="txtFechaInicioSanitario" required>
+                        </div>
+
+                        <div class="col-md-6 mb-3">
+                            <label for="txtFechaFinSanitario" class="form-label fw-bold">Fecha Fin*</label>
+
+                            <input type="date" class="form-control" name="fechaFin" id="txtFechaFinSanitario" required>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                    <button type="submit" class="btn btn-success">
+                        <i class="bi bi-download"></i> Descargar Excel
+                    </button>
+                </div>
+            }
+        </div>
+    </div>
+</div>
+@section Scripts {
+
+    <link rel="stylesheet" href="https://cdn.datatables.net/2.1.8/css/dataTables.dataTables.min.css" />
+    <script src="https://cdn.datatables.net/2.1.8/js/dataTables.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+
+    <script>
+    // ===== Mensaje desde TempData (seguro) =====
+    let mensaje = @Html.Raw(Json.Encode(TempData["Mensaje"] ?? ""));
+    if (mensaje) {
+        Swal.fire(mensaje);
+    }
+
+    // ===== DataTable =====
+        var tablaSanitarios; // Variable global para controlar la instancia
+
+        function inicializarTablaRegSanitarios() {
+            // 1. Si ya existe, destruirla limpiamente antes de crear otra
+            if ($.fn.DataTable.isDataTable('#tablaRegSanitarios')) {
+                $('#tablaRegSanitarios').DataTable().destroy();
+            }
+
+            // 2. Crear la nueva instancia
+            tablaSanitarios = $('#tablaRegSanitarios').DataTable({
+                language: {
+                    url: "https://cdn.datatables.net/plug-ins/1.13.6/i18n/es-ES.json"
+                },
+  responsive: true,
+      pageLength: 10,
+        lengthMenu: [[10, 25, 50, 100], [10, 25, 50, 100]],
+        ordering: false,
+        autoWidth: false
+            });
+        }
+
+        $(document).ready(function () {
+            inicializarTablaRegSanitarios();
+    
+    // ✅ NUEVO: Configurar búsqueda en tiempo real
+    configurarBusquedaRapida();
+        });
+
+// ==========================================
+// ✅ BÚSQUEDA EN TIEMPO REAL (AJAX A BD)
+// ==========================================
+let timeoutBusqueda = null;
+
+function configurarBusquedaRapida() {
+    // Evento para el campo de Serial
+ $('#busquedaRapidaSerial').on('keyup', function(e) {
+        if (e.key === 'Enter') {
+   ejecutarBusquedaRapida();
+        } else {
+  // Búsqueda automática después de 800ms de inactividad
+   clearTimeout(timeoutBusqueda);
+ timeoutBusqueda = setTimeout(() => {
+ ejecutarBusquedaRapida();
+    }, 800);
+        }
+    });
+
+    // Evento para el campo de Nombre
+    $('#busquedaRapidaNombre').on('keyup', function(e) {
+        if (e.key === 'Enter') {
+     ejecutarBusquedaRapida();
+        } else {
+      clearTimeout(timeoutBusqueda);
+     timeoutBusqueda = setTimeout(() => {
+   ejecutarBusquedaRapida();
+            }, 800);
+  }
+    });
+}
+
+async function ejecutarBusquedaRapida() {
+ const serial = $('#busquedaRapidaSerial').val().trim();
+  const nombre = $('#busquedaRapidaNombre').val().trim();
+    
+    // Si ambos están vacíos, cargar todos los registros
+    if (!serial && !nombre) {
+      limpiarBusquedaRapida();
+  return;
+    }
+
+    try {
+   // ✅ NUEVO: Mostrar indicador sutil en lugar de spinner grande
+  $('#indicadorSerial, #indicadorNombre').removeClass('d-none');
+   
+        // Deshabilitar inputs mientras busca
+   $('#busquedaRapidaSerial, #busquedaRapidaNombre').prop('disabled', true);
+
+   // ✅ AJAX al servidor para buscar en TODA la BD
+ const params = new URLSearchParams({
+            MnfSerial: serial,
+ItemName: nombre
+        });
+
+  const response = await fetch(`/Documentos/FiltrarRegSanitario?${params.toString()}`);
+
+        if (!response.ok) throw new Error("Error en la respuesta del servidor");
+
+        const html = await response.text();
+
+      // Inyectar resultados SIN reemplazar toda la tabla
+ document.querySelector("#div_listado").innerHTML = html;
+
+        // Re-inicializar DataTables
+      inicializarTablaRegSanitarios();
+
+    } catch (error) {
+        console.error(error);
+   Swal.fire({
+ icon: 'error',
+   title: 'Error',
+     text: 'No se pudo realizar la búsqueda.',
+      toast: true,
+  position: 'top-end',
+          showConfirmButton: false,
+   timer: 3000
+        });
+    } finally {
+     // ✅ Ocultar indicadores y re-habilitar inputs
+        $('#indicadorSerial, #indicadorNombre').addClass('d-none');
+      $('#busquedaRapidaSerial, #busquedaRapidaNombre').prop('disabled', false);
+    }
+}
+
+function limpiarBusquedaRapida() {
+    $('#busquedaRapidaSerial').val('');
+    $('#busquedaRapidaNombre').val('');
+    
+    // Recargar la página para mostrar todos los registros
+    window.location.reload();
+}
+    // ===== Modales =====
+    function abrirModalRegSanitario() {
+        const modal = bootstrap.Modal.getOrCreateInstance('#modalRegistroSanitario');
+        modal.show();
+    }
+
+    function cerrarModalRegSanitario() {
+        const el = document.getElementById('modalRegistroSanitario');
+        const modal = bootstrap.Modal.getInstance(el) || bootstrap.Modal.getOrCreateInstance(el);
+        modal.hide();
+        el.querySelector('form')?.reset();
+    }
+
+    function abrirModalFiltros() {
+        const modal = new bootstrap.Modal(document.getElementById('modalRegSanitario'));
+        modal.show();
+    }
+
+    // ===== Eliminar =====
+    function eliminarRegSanitario(MnfSerial, btn) {
+        Swal.fire({
+            title: '¿Eliminar Registro Sanitario?',
+            text: `Se eliminará el Reg. Sanitario: ${MnfSerial}`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: '@Url.Action("EliminarRegSanitarioAjax", "Documentos")',
+                    type: 'POST',
+                    data: { MnfSerial },
+                    success: function (response) {
+                        if (response.success) {
+                            Swal.fire('Eliminado', response.message, 'success')
+                                .then(() => window.location.reload());
+                        } else {
+                            Swal.fire('Error', response.message, 'error');
+                        }
+                    },
+                    error: function () {
+                        Swal.fire('Error', 'Ocurrió un error al eliminar.', 'error');
+                    }
+                });
+            }
+        });
+    }
+
+    // ===== Ver PDF =====
+    function verPDF(ruta) {
+        const iframe = document.getElementById("iframePDF");
+        iframe.src = ruta;
+        const modal = new bootstrap.Modal(document.getElementById("modalVisorPDF"));
+        modal.show();
+    }
+
+    // ===== Filtros =====
+        async function aplicarFiltros(reset = false) {
+
+    // Limpiar inputs si es reset
+  if (reset) {
+  document.getElementById("filtroSerial").value = "";
+        document.getElementById("filtroItemName").value = "";
+   document.getElementById("filtroOpCarga").value = "";
+   document.getElementById("filtroFechaC").value = "";
+    }
+
+    const params = new URLSearchParams({
+  MnfSerial: document.getElementById("filtroSerial").value,
+    ItemName: document.getElementById("filtroItemName").value,
+        OpCarga: document.getElementById("filtroOpCarga").value,
+ TiempoCarga: document.getElementById("filtroFechaC").value || ""
+    });
+
+ // Validación opcional: evitar búsqueda vacía si no es reset
+    if (!reset) {
+   const tieneFiltro = [...params.values()].some(v => v && v.length > 0);
+        if (!tieneFiltro) {
+       Swal.fire({ icon: 'warning', title: 'Filtro vacío', text: 'Ingrese al menos un dato.' });
+   return;
+ }
+    }
+
+  try {
+  // Mostrar loading visual mientras busca
+        document.querySelector("#div_listado").innerHTML =
+       '<div class="text-center p-5"><div class="spinner-border text-success" role="status"></div><p>Filtrando...</p></div>';
+
+    const response = await fetch(`/Documentos/FiltrarRegSanitario?${params.toString()}`);
+
+ if (!response.ok) throw new Error("Error en la respuesta del servidor");
+
+  const html = await response.text();
+
+   // 1. Inyectar el nuevo HTML (Solo la tabla)
+        document.querySelector("#div_listado").innerHTML = html;
+
+        // 2. IMPORTANTE: Volver a aplicar DataTables al nuevo HTML
+ inicializarTablaRegSanitarios();
+
+     // 3. Cerrar modal
+  const modalElement = document.getElementById('modalRegSanitario');
+        const modalInstance = bootstrap.Modal.getInstance(modalElement);
+   if (modalInstance) modalInstance.hide();
+
+  } catch (error) {
+ console.error(error);
+  Swal.fire('Error', 'No se pudo filtrar la información.', 'error');
+        // Restaurar tabla vacía o mensaje de error en el div
+  document.querySelector("#div_listado").innerHTML = '<p class="text-center text-danger">Error al cargar datos.</p>';
+    }
+}
+    </script>
+
+    <script>
+        // ===== SlimSelect Serial =====
+        async function verificarSerialRegistrado(mnfserial) {
+            const resp = await fetch(`/Documentos/VerificarSerial?mnfserial=${encodeURIComponent(mnfserial)}`);
+            const data = await resp.json();
+            return data.registrado === true;
+        }
+
+        let slimSerialSelect = null;
+        const serialMap = new Map();
+
+        function inicializarSlimSelectSerial() {
+            const select = document.querySelector('#MnfSerial');
+
+            if (slimSerialSelect instanceof SlimSelect) {
+                slimSerialSelect.destroy();
+            }
+
+            slimSerialSelect = new SlimSelect({
+                select: select,
+                data: [],
+                placeholder: 'Selecciona un número de serie',
+                allowDeselect: true,
+                showSearch: true,
+                searchPlaceholder: 'Escriba 2 letras',
+                searchText: 'No encontrado',
+                searchingText: 'Buscando...',
+                closeOnSelect: true,
+                settings: {
+                    placeholderText: 'Selecciona un número de serie',
+                    allowDeselect: true,
+                    searchPlaceholder: 'Escriba 2 letras',
+                    searchText: 'No encontrado',
+                    searchingText: 'Buscando...'
+                },
+                events: {
+                    search: (term) => {
+                        if (!term || term.length < 2) return [];
+
+                        return fetch('/Documentos/BuscarSerialesAjax', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ MnfSerial: term })
+                        })
+                            .then(r => r.json())
+                            .then(data => {
+                                serialMap.clear();
+                                return data.map(item => {
+                                    const value = item.value || item.MnfSerial;
+                                    serialMap.set(value, item);
+                                    return { text: value, value };
+                                });
+                            })
+                            .catch(() => [{ text: 'Error al buscar', value: '' }]);
+                    },
+
+                    afterChange: async () => {
+                        const selected = slimSerialSelect.getSelected()?.[0];
+                        if (!selected) return;
+
+                        const yaExiste = await verificarSerialRegistrado(selected);
+                        if (yaExiste) {
+                            Swal.fire({
+                                icon: 'warning',
+                                title: 'Serial ya registrado',
+                                text: 'Este número de serie ya fue registrado. ¿Desea actualizarlo?',
+                                showCancelButton: true,
+                                confirmButtonText: 'Sí, actualizar',
+                                cancelButtonText: 'No'
+                            }).then(result => {
+                                if (!result.isConfirmed) {
+                                    slimSerialSelect.setSelected([]);
+                                }
+                            });
+                        }
+                    }
+                }
+            });
+        }
+
+        $('#modalRegistroSanitario').on('shown.bs.modal', function () {
+            inicializarSlimSelectSerial();
+        });
+
+        function abrirModalReporteSanitario() {
+            // 1. Obtener el formulario
+            const form = document.getElementById('formReporteSanitario');
+
+            // 2. Limpiar el formulario si existe para evitar datos viejos
+            if (form) form.reset();
+
+            // 3. (Opcional) Pre-cargar fechas con el día actual para mejor UX
+            const hoy = new Date().toISOString().split('T')[0];
+            const inputInicio = document.getElementById('txtFechaInicioSanitario');
+            const inputFin = document.getElementById('txtFechaFinSanitario');
+
+            if (inputInicio) inputInicio.value = hoy;
+            if (inputFin) inputFin.value = hoy;
+
+            // 4. Instanciar y mostrar el modal
+            const modalElement = document.getElementById('modalReporteSanitario');
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+        }
+
+        // (Opcional) Validación extra antes de enviar el form si necesitas validar los 30 días
+        document.getElementById('formReporteSanitario')?.addEventListener('submit', function (e) {
+            const inicio = new Date(document.getElementById('txtFechaInicioSanitario').value);
+            const fin = new Date(document.getElementById('txtFechaFinSanitario').value);
+
+            // Validar que la fecha de inicio no sea mayor a la fin
+            if (inicio > fin) {
+                e.preventDefault();
+                Swal.fire('Error', 'La fecha de inicio no puede ser mayor a la fecha fin.', 'error');
+                return;
+            }
+
+            const diferenciaTiempo = Math.abs(fin - inicio);
+            const diferenciaDias = Math.ceil(diferenciaTiempo / (1000 * 60 * 60 * 24));
+            if (diferenciaDias > 31) {
+                e.preventDefault();
+                Swal.fire('Rango Excedido', 'El rango no puede superar los 31 días.', 'warning');
+            }
+        });
+
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
+
+        let pdfUrlActual = ''; // Variable global para la descarga
+
+        async function verPDF(ruta) {
+            pdfUrlActual = ruta; // Guardar URL para descarga
+            console.log("Intentando abrir PDF:", ruta);
+
+            // 1. Mostrar el modal
+            const modalElement = document.getElementById("modalVisorPDF");
+            const modal = new bootstrap.Modal(modalElement);
+            modal.show();
+
+            const container = document.getElementById('pdf-render-container');
+            const pdfInfo = document.getElementById('pdfInfo');
+
+            // Limpiar contenedor y mostrar spinner
+            container.innerHTML = '<div class="spinner-border text-light mt-5" role="status"><span class="visually-hidden">Cargando...</span></div>';
+            pdfInfo.textContent = '';
+
+            try {
+                // 2. Cargar documento PDF
+                const loadingTask = pdfjsLib.getDocument(ruta);
+                const pdf = await loadingTask.promise;
+
+                // Limpiar spinner
+                container.innerHTML = '';
+
+                // Mostrar información
+                pdfInfo.textContent = `Documento con ${pdf.numPages} página(s)`;
+
+                // 3. ✅ Renderizar TODAS las páginas
+                for (let pageNum = 1; pageNum <= pdf.numPages; pageNum++) {
+                    await renderizarPaginaRegSanitario(pdf, pageNum, container);
+                }
+
+            } catch (error) {
+                console.error('Error al renderizar PDF:', error);
+                container.innerHTML = '<p class="text-light mt-3"><i class="bi bi-exclamation-triangle"></i> No se pudo visualizar el documento.</p>';
+                pdfInfo.textContent = '';
+            }
+        }
+
+        // Función auxiliar para renderizar cada página
+        async function renderizarPaginaRegSanitario(pdfDoc, num, container) {
+            const page = await pdfDoc.getPage(num);
+
+            // Escala para buena calidad
+            const scale = 1.5;
+            const viewport = page.getViewport({ scale: scale });
+
+            // Contenedor de la página
+            const pageContainer = document.createElement('div');
+            pageContainer.className = 'mb-3';
+            pageContainer.style.position = 'relative';
+
+            // Agregar etiqueta de número de página si hay más de una
+            if (pdfDoc.numPages > 1) {
+                const pageLabel = document.createElement('div');
+                pageLabel.className = 'badge bg-light text-dark position-absolute top-0 start-50 translate-middle-x mt-2';
+                pageLabel.style.zIndex = '10';
+                pageLabel.textContent = `Página ${num} de ${pdfDoc.numPages}`;
+                pageContainer.appendChild(pageLabel);
+            }
+
+            // Crear canvas
+            const canvas = document.createElement('canvas');
+            canvas.style.boxShadow = '0 0 10px rgba(0,0,0,0.5)';
+            canvas.style.backgroundColor = 'white';
+            canvas.height = viewport.height;
+            canvas.width = viewport.width;
+
+            pageContainer.appendChild(canvas);
+            container.appendChild(pageContainer);
+
+            // Renderizar
+            const renderContext = {
+                canvasContext: canvas.getContext('2d'),
+                viewport: viewport
+            };
+            await page.render(renderContext).promise;
+        }
+
+        // ==========================================
+        // FUNCIÓN PARA DESCARGAR PDF
+        // ==========================================
+        function descargarPDF() {
+            if (!pdfUrlActual) {
+                Swal.fire('Error', 'No hay ningún PDF cargado para descargar.', 'error');
+                return;
+            }
+
+            // Crear enlace temporal para descarga
+            const link = document.createElement('a');
+            link.href = pdfUrlActual;
+            link.download = 'RegistroSanitario_' + new Date().getTime() + '.pdf';
+            link.target = '_blank';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            // Mensaje de confirmación
+            Swal.fire({
+                icon: 'success',
+                title: 'Descarga iniciada',
+                text: 'El archivo PDF se está descargando.',
+                timer: 2000,
+                showConfirmButton: false
+            });
+        }
+    </script>
+
+}

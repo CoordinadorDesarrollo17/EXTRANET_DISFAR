@@ -1,0 +1,61 @@
+﻿@model Capa_Entidad.Inventario_ENT.TablasSql.RegistrosSanitarios_E
+@{
+    ViewBag.Title = "GestionRegistroSanitario";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+<style>
+    table {
+        text-align: center;
+    }
+    td {
+        padding: 10px;
+        font-size: 14px;
+    }
+</style>
+<a style="float:left;" href="@Url.Action("GestionDocumentos", "Home")" class="btn btn-secondary">
+    <i class="icon-arrow-bold-left"></i>
+    <span>Regresar</span>
+</a>
+<br />
+<br />
+<div id="bodyform">
+    <div class="m-0 row justify-content-center align-items-center">
+        @using (Html.BeginForm("GestionRegistroSanitario", "Home", FormMethod.Post, new { @enctype = "multipart/form-data" }))
+        {
+            <h5 id="resaltado">Registros Sanitarios</h5>
+            <table>
+                <tr>
+                    <td><input accept=".pdf" class="form-control" id="ArchivoPdf" name="ArchivoPdf" type="file" value=""></td>
+                </tr>
+                <tr>
+                    <td>
+                        <select class="cls-select" id="MnfSerial" name="MnfSerial">
+                            <option value="">Seleccione</option>
+                            @foreach (var item in ViewBag.RegistrosSanitarios)
+                            {
+                                <option value="@item.MnfSerial">@item.MnfSerial</option>
+                            }
+                        </select>
+                    </td>
+                </tr>
+                <tr>
+                    <td>
+                        <button type="submit" class="btn btn-success">
+                            <i class="bi bi-cloud-arrow-up-fill"> </i>  Cargar Archivo
+                        </button>
+                    </td>
+                </tr>
+            </table>
+        }
+        <p id="advertencias">*Solo se admite la carga de archivos .pdf (10 MB max.)</p>
+    </div>
+</div>
+@section Scripts{
+    <script>
+        let mensaje = '@ViewBag.mensaje'
+        if (mensaje != '') {
+            Swal.fire(mensaje)
+        }
+        inicializarSlimSelects('cls-select')
+    </script>
+}
