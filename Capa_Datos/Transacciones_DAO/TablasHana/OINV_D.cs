@@ -251,8 +251,8 @@ namespace Capa_Datos.Transacciones_DAO.TablasHana
         }
         public int ImportarComprobante(OINV_E obj)
         {
-            string queryFactura = "insert into dbo.Factura values(@DocEntry,@CardCode,@Correlativo,@DocDate,@DocTotal,@BaseType,@BaseEntry);";
-            string queryDetFactura = "insert into dbo.DetFactura values(@ItemCode,@BatchNum,@LineNum,@WhsCode,@ItemName,@BaseType,@BaseEntry);";
+            string queryFactura = $"insert into {uti.BaseDatosDisfar}Factura values(@DocEntry,@CardCode,@Correlativo,@DocDate,@DocTotal,@BaseType,@BaseEntry);";
+            string queryDetFactura = $"insert into {uti.BaseDatosDisfar}DetFactura values(@ItemCode,@BatchNum,@LineNum,@WhsCode,@ItemName,@BaseType,@BaseEntry);";
             SqlConnection cn = new SqlConnection(uti.cadSql);
             try
             {

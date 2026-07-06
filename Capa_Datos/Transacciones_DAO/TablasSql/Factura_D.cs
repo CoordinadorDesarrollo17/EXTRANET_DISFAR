@@ -35,8 +35,8 @@ namespace Capa_Datos.Transacciones_DAO.TablasSql
                         var sb = new StringBuilder();
                         sb.AppendLine($"SELECT {top} FT.DocEntry, FT.CardCode, Cl.CardName, FT.Correlativo, CONVERT(varchar, FT.DocDate, 103),");
                         sb.AppendLine("FT.DocTotal, FT.BaseType, FT.BaseEntry");
-                        sb.AppendLine("FROM Factura FT");
-                        sb.AppendLine("INNER JOIN Clientes Cl ON Cl.CardCode = FT.CardCode");
+                        sb.AppendLine($"FROM {uti.BaseDatosDisfar}Factura FT");
+                        sb.AppendLine($"INNER JOIN {uti.BaseDatosDisfar}Clientes Cl ON Cl.CardCode = FT.CardCode");
                         sb.AppendLine("WHERE 1 = 1");
 
                         if (!string.IsNullOrWhiteSpace(condicion))
@@ -44,7 +44,7 @@ namespace Capa_Datos.Transacciones_DAO.TablasSql
                             sb.AppendLine(condicion.Trim());
                         }
 
-                        sb.AppendLine("AND EXISTS (SELECT 1 FROM detfactura DET WHERE DET.BaseEntry = FT.BaseEntry)");
+                        sb.AppendLine($"AND EXISTS (SELECT 1 FROM {uti.BaseDatosDisfar}detfactura DET WHERE DET.BaseEntry = FT.BaseEntry)");
                         sb.AppendLine("ORDER BY FT.DocDate DESC");
 
                         cmd.CommandText = sb.ToString();
@@ -102,7 +102,7 @@ namespace Capa_Datos.Transacciones_DAO.TablasSql
             var valores = new List<object> { DocEntry };
 
             query.AppendLine("SELECT FT.DocEntry, FT.CardCode, FT.Correlativo, CONVERT(varchar, FT.DocDate, 103) AS DocDate, FT.DocTotal, FT.BaseType, FT.BaseEntry");
-            query.AppendLine("FROM Factura FT");
+            query.AppendLine($"FROM {uti.BaseDatosDisfar}Factura FT");
             query.AppendLine("WHERE FT.DocEntry = @DocEntry");
 
             if (user.TipoUsuarioId == 3)
