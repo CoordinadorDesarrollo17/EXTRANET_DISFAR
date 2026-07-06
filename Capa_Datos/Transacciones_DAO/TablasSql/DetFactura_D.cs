@@ -11,10 +11,11 @@ namespace Capa_Datos.Transacciones_DAO.TablasSql
         RegistrosSanitarios_D oersD = new RegistrosSanitarios_D();
         EspecificacionesTecnicas_D oeetD = new EspecificacionesTecnicas_D();
         Protocolos_D oeptD = new Protocolos_D();
+        Utilitarios uti = new Utilitarios();
         public List<DetFactura_E> ListaDetalleFactura(int baseEntry)
         {
             var lista = new List<DetFactura_E>();
-            string query = "SELECT ItemCode,BatchNum,ItemName,LineNum from DetFactura WHERE BaseEntry=@BaseEntry";
+            string query = $"SELECT ItemCode,BatchNum,ItemName,LineNum from {uti.BaseDatosDisfar}DetFactura WHERE BaseEntry=@BaseEntry";
             try
             {
                 SqlDataReader dr = db.SqlExecuteReaderNoSp(query, new List<string>() { "@BaseEntry" }, baseEntry);
