@@ -7,13 +7,14 @@ namespace Capa_Datos.SociosNegocios_DAO.TablasSql
 {
     public class Clientes_D
     {
+        Utilitarios uti = new Utilitarios();
         DBHelper db = new DBHelper(); 
         public List<Clientes_E> ListarClientes(Clientes_E filtro, bool tienenUsuarios)
         {
             List<Clientes_E> lista = new List<Clientes_E>();
-            string query = "SELECT CLI.Id, CLI.CardCode, CLI.CardName, CLI.CardType, CLI.E_Mail, CONVERT(varchar, CLI.CreateDate, 103)  FROM Clientes CLI";
+            string query = $"SELECT CLI.Id, CLI.CardCode, CLI.CardName, CLI.CardType, CLI.E_Mail, CONVERT(varchar, CLI.CreateDate, 103)  FROM {uti.BaseDatosDisfar}Clientes CLI";
             if (tienenUsuarios == false)
-                query += " WHERE NOT EXISTS (SELECT 1 FROM Usuarios USU WHERE USU.Usuario = CLI.CardCode)";
+                query += $" WHERE NOT EXISTS (SELECT 1 FROM {uti.BaseDatosDisfar}Usuarios USU WHERE USU.Usuario = CLI.CardCode)";
             try
             {
                 SqlDataReader dr = db.SqlExecuteReaderNoSp(query);
