@@ -287,7 +287,7 @@ namespace Capa_Datos.Seguridad_DAO.TablasSql
             string query = "UPDATE Usuarios SET Contrasena = (SELECT ENCRYPTBYPASSPHRASE('C0b3f@rSAC', @Contrasena)) where Id = @IdUsuario";
             try
             {
-                db.MysqlExecuteNonQueryTrxNoSp(query, new List<string>() { "@Contrasena", "@IdUsuario" }, contr, obj.Id);
+                db.MysqlExecuteNonQueryTrxNoSp(query, new List<string>() { "@Contrasena", "@IdUsuario" },false, contr, obj.Id);
                 obj.NuevaContrasena = contr;
             }
             catch { throw new Exception("Error al resetear"); }

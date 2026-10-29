@@ -48,6 +48,10 @@ namespace Capa_Datos
         {
             return new SqlConnection(uti.cadSql);
         }
+        public SqlConnection SqlConexion_DISFAR()
+        {
+            return new SqlConnection(uti.cadSql_DISFAR);
+        }
         public SqlDataReader SqlExecuteReaderNoSp(string query, List<string> npara = null, params object[] Parametros)
         {
             SqlConnection cnx = new SqlConnection(uti.cadSql);
@@ -98,9 +102,9 @@ namespace Capa_Datos
                 }
             }
         }
-        public void MysqlExecuteNonQueryTrxNoSp(string query, List<string> npara = null, params object[] Parametros)
+        public void MysqlExecuteNonQueryTrxNoSp(string query, List<string> npara = null,bool esDisfar = false,  params object[] Parametros)
         {
-            SqlConnection cnx = new SqlConnection(uti.cadSql);
+            SqlConnection cnx = new SqlConnection(esDisfar ? uti.cadSql_DISFAR : uti.cadSql);
             cnx.Open();
             SqlTransaction trx = cnx.BeginTransaction();
             try

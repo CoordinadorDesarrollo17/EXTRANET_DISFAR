@@ -117,7 +117,7 @@
           {
          <a href="javascript:void(0);"
      class="btn btn-sm btn-outline-primary"
-  onclick="verPDF('@Url.Action("DocumentoRegSanitarioPDF", "Documentos", new { id = item.MnfSerial})')">
+  onclick="verPDF('@Url.Action("DocumentoRegSanitarioPDF", "Documentos", new { id = item.MnfSerial , itemCode = item.ItemCode})')">
       <i class="bi bi-eye"></i> Ver
      </a>
      }
@@ -133,7 +133,7 @@
 
    <button type="button"
      class="btn btn-sm btn-outline-danger ms-1"
-           onclick="eliminarRegSanitario('@item.MnfSerial',this)">
+           onclick="eliminarRegSanitario('@item.ItemCode','@item.MnfSerial',this)">
          <i class="bi bi-trash"></i> Eliminar
                </button>
             </td>
@@ -447,7 +447,7 @@ function limpiarBusquedaRapida() {
     }
 
     // ===== Eliminar =====
-    function eliminarRegSanitario(MnfSerial, btn) {
+    function eliminarRegSanitario(itemCode,MnfSerial, btn) {
         Swal.fire({
             title: '¿Eliminar Registro Sanitario?',
             text: `Se eliminará el Reg. Sanitario: ${MnfSerial}`,
@@ -460,7 +460,7 @@ function limpiarBusquedaRapida() {
                 $.ajax({
                     url: '@Url.Action("EliminarRegSanitarioAjax", "Documentos")',
                     type: 'POST',
-                    data: { MnfSerial },
+                    data: { MnfSerial, itemCode },
                     success: function (response) {
                         if (response.success) {
                             Swal.fire('Eliminado', response.message, 'success')

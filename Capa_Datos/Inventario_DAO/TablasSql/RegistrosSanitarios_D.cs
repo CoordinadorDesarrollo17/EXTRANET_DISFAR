@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Data;
 using System.Data.SqlClient;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace Capa_Datos.Inventario_DAO.TablasSql
@@ -20,14 +21,14 @@ namespace Capa_Datos.Inventario_DAO.TablasSql
             string query = "";
 
             // Definimos la ruta física donde se guardará
-            string rutaDirectorio = Path.Combine(uti.directorioFileServer.TrimEnd('/', '\\'), "RegistrosSanitarios");
+            string rutaDirectorio = Path.Combine(uti.directorioFileServer_DISFAR.TrimEnd('/', '\\'), "RegistrosSanitarios"); //add
 
             // Definimos la ruta relativa para la BD
             obj.Ruta = Path.Combine("RegistrosSanitarios", obj.MnfSerial + ".pdf");
 
             // Validamos si existe para decidir INSERT o UPDATE
             // Nota: Es mejor especificar las columnas en el INSERT para evitar errores si la tabla cambia
-            if (!ExisteSerial(obj.MnfSerial))
+            if (!ExisteSerial(obj.MnfSerial,true)) //add
             {
                 query = "INSERT INTO RegistrosSanitarios (MnfSerial, Ruta, OpCarga, TiempoCarga) VALUES (@MnfSerial, @Ruta, @OpCarga, @TiempoCarga);";
             }
@@ -37,7 +38,7 @@ namespace Capa_Datos.Inventario_DAO.TablasSql
             }
 
             // Usamos 'using' para asegurar que la conexión se cierre siempre
-            using (SqlConnection cn = new SqlConnection(uti.cadSql))
+            using (SqlConnection cn = new SqlConnection(uti.cadSql_DISFAR))
             {
                 try
                 {
@@ -89,12 +90,12 @@ namespace Capa_Datos.Inventario_DAO.TablasSql
             return status;
         }
 
-        public RegistrosSanitarios_E BuscarRegSanitario(string MnfSerial)
+        public RegistrosSanitarios_E BuscarRegSanitario(string MnfSerial, bool esDisfar = false)
         {
             RegistrosSanitarios_E rs = null;
             string query = "SELECT * FROM RegistrosSanitarios WHERE MnfSerial = @MnfSerial";
 
-            using (SqlConnection cn = db.SqlConexion())
+            using (SqlConnection cn = esDisfar ? db.SqlConexion_DISFAR() : db.SqlConexion())
             {
                 try
                 {
@@ -114,7 +115,8 @@ namespace Capa_Datos.Inventario_DAO.TablasSql
                                 if (!dr.IsDBNull(3)) rs.TiempoCarga = dr.GetDateTime(3);
 
                                 // Lógica de ruta archivo
-                                var rutaArchivo = Path.Combine(uti.directorioFileServer.TrimEnd('/', '\\'), rs.Ruta);
+                                var directorio = esDisfar ? uti.directorioFileServer_DISFAR : uti.directorioFileServer;
+                                var rutaArchivo = Path.Combine(directorio.TrimEnd('/', '\\'), rs.Ruta);
                                 rs.RutaArchivo = File.Exists(rutaArchivo) ? rutaArchivo : null;
                             }
                         }
@@ -131,99 +133,198 @@ namespace Capa_Datos.Inventario_DAO.TablasSql
         public (Helper_E, List<RegistrosSanitarios_E>) ListarRegSanitarios(string condicion = "", Dictionary<string, object> parametros = null)
         {
             var lista = new List<RegistrosSanitarios_E>();
-var helper = new Helper_E();
+            var helper = new Helper_E();
 
-    try
-    {
-        using (var cn = new SqlConnection(uti.cadSql))
-    using (var cmd = cn.CreateCommand())
-        {
-        var sb = new StringBuilder();
-     
-            // ✅ SOLUCIÓN: Subconsulta con ROW_NUMBER para evitar duplicados
-  sb.AppendLine(@"
-    SELECT TOP 100 
-   x.MnfSerial, 
-    x.Ruta, 
-        x.OpCarga, 
-    x.TiempoCarga,
-  y.ItemCode,
-        y.ItemName
-    FROM (
-   SELECT rs.MnfSerial, rs.Ruta, rs.OpCarga, rs.TiempoCarga,
-            ROW_NUMBER() OVER (PARTITION BY rs.MnfSerial ORDER BY rs.TiempoCarga DESC) AS rn
-  FROM RegistrosSanitarios rs
-    ) x
- LEFT JOIN (
-        SELECT 
-            lrs.MnfSerial,
-        lrs.ItemCode,
-   pr.ItemName,
-            ROW_NUMBER() OVER (PARTITION BY lrs.MnfSerial ORDER BY lrs.ItemCode) AS rn_lote
-      FROM LotesRegistroSanitario lrs
-        LEFT JOIN Productos pr ON pr.ItemCode = lrs.ItemCode
-    ) y ON y.MnfSerial = x.MnfSerial AND y.rn_lote = 1
-    WHERE x.rn = 1 ");
+            try
+            {
+                using (var cn = new SqlConnection(uti.cadSql))
+                using (var cmd = cn.CreateCommand())
+                {
+                    var sb = new StringBuilder();
 
-            if (!string.IsNullOrWhiteSpace(condicion))
-   {
-          sb.AppendLine(condicion);
- }
-     sb.AppendLine("ORDER BY x.TiempoCarga DESC");
+                    //sb.AppendLine(@"
+                    //  SELECT TOP 100 
+                    //      x.MnfSerial, 
+                    //      x.Ruta, 
+                    //      x.OpCarga, 
+                    //      x.TiempoCarga,
+                    //      y.ItemCode,
+                    //      y.ItemName
+                    //  FROM (
+                    //     SELECT rs.MnfSerial, rs.Ruta, rs.OpCarga, rs.TiempoCarga,
+                    //              ROW_NUMBER() OVER (PARTITION BY rs.MnfSerial ORDER BY rs.TiempoCarga DESC) AS rn
+                    //     FROM RegistrosSanitarios rs
+                    //  ) x
+                    //  LEFT JOIN (
+                    //      SELECT lrs.MnfSerial, lrs.ItemCode,pr.ItemName,
+                    //          ROW_NUMBER() OVER (PARTITION BY lrs.MnfSerial ORDER BY lrs.ItemCode) AS rn_lote
+                    //      FROM LotesRegistroSanitario lrs
+                    //      LEFT JOIN Productos pr ON pr.ItemCode = lrs.ItemCode
+                    //  ) y ON y.MnfSerial = x.MnfSerial AND y.rn_lote = 1
+                    //  WHERE x.rn = 1 ");
 
-cmd.CommandText = sb.ToString();
+                    sb.AppendLine(@"
+                        SELECT TOP 100
+                            t.MnfSerial,
+                            t.Ruta,
+                            t.OpCarga,
+                            t.TiempoCarga,
+                            t.ItemCode,
+                            t.ItemName
+                        FROM
+                        (
+                            --------------------------------------------------------------------
+                            -- DOCUMENTOS_REGULATORIOS
+                            --------------------------------------------------------------------
+                            SELECT
+                                x.MnfSerial,
+                                x.Ruta,
+                                x.OpCarga,
+                                x.TiempoCarga,
+                                y.ItemCode,
+                                y.ItemName
+                            FROM (
+                                SELECT
+                                    rs.MnfSerial,
+                                    rs.Ruta,
+                                    rs.OpCarga,
+                                    rs.TiempoCarga,
+                                    ROW_NUMBER() OVER (
+                                        PARTITION BY rs.MnfSerial
+                                        ORDER BY rs.TiempoCarga DESC
+                                    ) AS rn
+                                FROM DOCUMENTOS_REGULATORIOS.dbo.RegistrosSanitarios rs
+                            ) x
+                            LEFT JOIN (
+                                SELECT
+                                    lrs.MnfSerial,
+                                    lrs.ItemCode,
+                                    pr.ItemName,
+                                    ROW_NUMBER() OVER (
+                                        PARTITION BY lrs.MnfSerial
+                                        ORDER BY lrs.ItemCode
+                                    ) AS rn_lote
+                                FROM DOCUMENTOS_REGULATORIOS.dbo.LotesRegistroSanitario lrs
+                                LEFT JOIN DOCUMENTOS_REGULATORIOS.dbo.Productos pr
+                                    ON pr.ItemCode = lrs.ItemCode
+                            ) y
+                                ON y.MnfSerial = x.MnfSerial
+                               AND y.rn_lote = 1
+                            WHERE x.rn = 1
+                              AND ISNULL(y.ItemCode,'') NOT IN ('PORT0410','PORT0414')
 
-         if (parametros != null)
-        {
-            foreach (var prm in parametros)
-         {
-             cmd.Parameters.Add(new SqlParameter(prm.Key, prm.Value ?? DBNull.Value));
-          }
-          }
+                            UNION ALL
 
-          cn.Open();
-      using (var dr = cmd.ExecuteReader())
-     {
-    while (dr.Read())
-     {
-         var reg = new RegistrosSanitarios_E
-             {
-    MnfSerial = dr.GetString(0),
-          Ruta = dr.IsDBNull(1) ? null : dr.GetString(1),
-         OpCarga = dr.IsDBNull(2) ? null : dr.GetString(2),
-  TiempoCarga = dr.GetDateTime(3),
-  ItemCode = dr.IsDBNull(4) ? null : dr.GetString(4),
- ItemName = dr.IsDBNull(5) ? null : dr.GetString(5)
-        };
+                            --------------------------------------------------------------------
+                            -- DOCUMENTOS_REGULATORIOS_DISFAR
+                            --------------------------------------------------------------------
+                            SELECT
+                                x.MnfSerial,
+                                x.Ruta,
+                                x.OpCarga,
+                                x.TiempoCarga,
+                                y.ItemCode,
+                                y.ItemName
+                            FROM (
+                                SELECT
+                                    rs.MnfSerial,
+                                    rs.Ruta,
+                                    rs.OpCarga,
+                                    rs.TiempoCarga,
+                                    ROW_NUMBER() OVER (
+                                        PARTITION BY rs.MnfSerial
+                                        ORDER BY rs.TiempoCarga DESC
+                                    ) AS rn
+                                FROM DOCUMENTOS_REGULATORIOS_DISFAR.dbo.RegistrosSanitarios rs
+                            ) x
+                            LEFT JOIN (
+                                SELECT
+                                    lrs.MnfSerial,
+                                    lrs.ItemCode,
+                                    pr.ItemName,
+                                    ROW_NUMBER() OVER (
+                                        PARTITION BY lrs.MnfSerial
+                                        ORDER BY lrs.ItemCode
+                                    ) AS rn_lote
+                                FROM DOCUMENTOS_REGULATORIOS_DISFAR.dbo.LotesRegistroSanitario lrs
+                                LEFT JOIN DOCUMENTOS_REGULATORIOS_DISFAR.dbo.Productos pr
+                                    ON pr.ItemCode = lrs.ItemCode
+                            ) y
+                                ON y.MnfSerial = x.MnfSerial
+                               AND y.rn_lote = 1
+                            WHERE x.rn = 1
+                              AND y.ItemCode IN ('PORT0410','PORT0414')
+                        ) t
+                        WHERE 1 = 1
+                    ");
 
-        if (!string.IsNullOrWhiteSpace(reg.Ruta))
-   {
-             var rutaFisica = Path.Combine(uti.directorioFileServer.TrimEnd('/', '\\'), reg.Ruta);
-         reg.RutaArchivo = File.Exists(rutaFisica) ? rutaFisica : null;
-     }
-    lista.Add(reg);
-     }
-     }
+                    if (!string.IsNullOrWhiteSpace(condicion))
+                    {
+                     sb.AppendLine(condicion);
+                    }
+                    sb.AppendLine("ORDER BY t.TiempoCarga DESC");
+
+                    cmd.CommandText = sb.ToString();
+
+                    if (parametros != null)
+                    {
+                        foreach (var prm in parametros)
+                        {
+                         cmd.Parameters.Add(new SqlParameter(prm.Key, prm.Value ?? DBNull.Value));
+                        }
+                    }
+
+                    cn.Open();
+                    using (var dr = cmd.ExecuteReader())
+                    {
+                        while (dr.Read())
+                        {
+                            var reg = new RegistrosSanitarios_E
+                            {
+                                MnfSerial = dr.GetString(0),
+                                Ruta = dr.IsDBNull(1) ? null : dr.GetString(1),
+                                OpCarga = dr.IsDBNull(2) ? null : dr.GetString(2),
+                                TiempoCarga = dr.GetDateTime(3),
+                                ItemCode = dr.IsDBNull(4) ? null : dr.GetString(4),
+                                ItemName = dr.IsDBNull(5) ? null : dr.GetString(5)
+                            };
+
+                            if (!string.IsNullOrWhiteSpace(reg.Ruta))
+                            {
+                                var itemCodesOtroDirectorio = new[] { "PORT0410", "PORT0414" };
+
+                                var directorio = itemCodesOtroDirectorio.Contains(
+                                    reg.ItemCode?.Trim(),
+                                    StringComparer.OrdinalIgnoreCase)
+                                    ? uti.directorioFileServer_DISFAR
+                                    : uti.directorioFileServer;
+
+                                var rutaFisica = Path.Combine(directorio.TrimEnd('/', '\\'), reg.Ruta);
+                                reg.RutaArchivo = File.Exists(rutaFisica) ? rutaFisica : null;
+                            }
+                            lista.Add(reg);
+                        }
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                helper.Titulo = "Error";
+                helper.Icono = "error";
+                helper.Mensajes.Add("Ocurrió un error al listar los registros sanitarios: " + ex.Message);
+            }
+
+            return (helper, lista);
         }
-    }
-    catch (Exception ex)
-    {
-        helper.Titulo = "Error";
-        helper.Icono = "error";
-        helper.Mensajes.Add("Ocurrió un error al listar los registros sanitarios: " + ex.Message);
-    }
 
-    return (helper, lista);
-}
-
-        public Helper_E EliminarRegSanitario(string MnfSerial)
+        public Helper_E EliminarRegSanitario(string MnfSerial, bool esDisfar = false)
         {
             Helper_E helper = new Helper_E();
 
             try
             {
                 string query = "DELETE FROM RegistrosSanitarios WHERE MnfSerial = @MnfSerial";
-                using (SqlConnection cn = db.SqlConexion())
+                using (SqlConnection cn = esDisfar ? db.SqlConexion_DISFAR() : db.SqlConexion())
                 {
                     cn.Open();
                     using (SqlCommand cmd = new SqlCommand(query, cn))
@@ -253,9 +354,9 @@ cmd.CommandText = sb.ToString();
             return helper;
         }
 
-        public bool ExisteSerial(string mnfserial)
+        public bool ExisteSerial(string mnfserial, bool esDisfar = false)
         {
-            using (var cn = new SqlConnection(uti.cadSql))
+            using (var cn = new SqlConnection(esDisfar ? uti.cadSql_DISFAR : uti.cadSql))
             {
                 cn.Open();
                 string query = "SELECT COUNT(1) FROM RegistrosSanitarios WHERE MnfSerial = @MnfSerial";

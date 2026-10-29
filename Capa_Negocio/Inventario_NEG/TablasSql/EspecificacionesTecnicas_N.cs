@@ -21,9 +21,9 @@ namespace Capa_Negocio.Inventario_NEG.TablasMysql
             o.Nombre = "ET";
             return _datos.AgregarEspTecnica(o);
         }
-        public EspecificacionesTecnicas_E BuscarEspTecnica(string ItemCode)
+        public EspecificacionesTecnicas_E BuscarEspTecnica(string ItemCode, bool esDisfar = false)
         {
-            return _datos.BuscarEspTecnica(ItemCode);
+            return _datos.BuscarEspTecnica(ItemCode, esDisfar);
         }
 
         public (Helper_E, List<EspecificacionesTecnicas_E>) ListarEspTecnicas(EspecificacionesTecnicas_E filtro = null)
@@ -37,35 +37,35 @@ namespace Capa_Negocio.Inventario_NEG.TablasMysql
                 // CORRECCIÓN 1: Agregar "x." para desambiguar
                 if (!string.IsNullOrWhiteSpace(filtro.ItemCode))
                 {
-                    condiciones.AppendLine("AND x.ItemCode LIKE @ItemCode");
+                    condiciones.AppendLine("AND t.ItemCode LIKE @ItemCode");
                     parametros["@ItemCode"] = $@"%{filtro.ItemCode.Trim()}%";
                 }
 
                 // CORRECCIÓN 2: ItemName viene de la tabla Productos (pr)
                 if (!string.IsNullOrWhiteSpace(filtro.ItemName))
                 {
-                    condiciones.AppendLine("AND pr.ItemName LIKE @ItemName");
+                    condiciones.AppendLine("AND t.ItemName LIKE @ItemName");
                     parametros["@ItemName"] = $@"%{filtro.ItemName.Trim()}%";
                 }
 
                 // CORRECCIÓN 3: Agregar "x." por seguridad
                 if (!string.IsNullOrWhiteSpace(filtro.Nombre))
                 {
-                    condiciones.AppendLine("AND x.Nombre LIKE @Nombre");
+                    condiciones.AppendLine("AND t.Nombre LIKE @Nombre");
                     parametros["@Nombre"] = $@"%{filtro.Nombre.Trim()}%";
                 }
 
                 // CORRECCIÓN 4: Agregar "x."
                 if (!string.IsNullOrWhiteSpace(filtro.OpCarga))
                 {
-                    condiciones.AppendLine("AND x.OpCarga LIKE @OpCarga");
+                    condiciones.AppendLine("AND t.OpCarga LIKE @OpCarga");
                     parametros["@OpCarga"] = $@"%{filtro.OpCarga.Trim()}%";
                 }
 
                 // CORRECCIÓN 5: Agregar "x."
                 if (filtro.TiempoCarga != DateTime.MinValue)
                 {
-                    condiciones.AppendLine("AND CONVERT(date, x.TiempoCarga) = @TiempoCarga");
+                    condiciones.AppendLine("AND CONVERT(date, t.TiempoCarga) = @TiempoCarga");
                     parametros["@TiempoCarga"] = filtro.TiempoCarga.Date;
                 }
             }
@@ -73,9 +73,9 @@ namespace Capa_Negocio.Inventario_NEG.TablasMysql
             return _datos.ListarEspTecnicas(condiciones.ToString(), parametros);
         }
 
-        public Helper_E EliminarEspTecnicas(string ItemCode)
+        public Helper_E EliminarEspTecnicas(string ItemCode, bool esDisfar = false)
         {
-            return new EspecificacionesTecnicas_D().EliminarEspTecnicas(ItemCode);
+            return new EspecificacionesTecnicas_D().EliminarEspTecnicas(ItemCode, esDisfar);
         }
 
         public bool VerificarEspTecExistente(string itemCode)

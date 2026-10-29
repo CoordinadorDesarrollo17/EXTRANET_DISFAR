@@ -280,11 +280,15 @@ namespace Capa_Usuario.Controllers
         public ActionResult DocumentoProtocoloPDF(string id, string lote)
         {
             var uti = new Utilitarios();
-            var protocolo = new Protocolos_N().BuscarProtocolo(id, lote);
+
+            bool esDisfar = id == "PORT0410" || id == "PORT0414"; //el id es el itemcode
+
+            var protocolo = new Protocolos_N().BuscarProtocolo(id, lote, esDisfar);
             if (protocolo == null || string.IsNullOrEmpty(protocolo.RutaArchivo))
                 return Content("No se encontro el archivo");
 
-            string rutaFisica = Path.Combine(uti.directorioFileServer.TrimEnd('/', '\\'), protocolo.Ruta);
+            var directorio = esDisfar ? uti.directorioFileServer_DISFAR : uti.directorioFileServer;
+            string rutaFisica = Path.Combine(directorio.TrimEnd('/', '\\'), protocolo.Ruta);
 
             if (!System.IO.File.Exists(rutaFisica))
                 return Content("No se encontro el archivo");
@@ -293,14 +297,18 @@ namespace Capa_Usuario.Controllers
             return File(stream, "application/pdf");
         }
 
-        public ActionResult DocumentoRegSanitarioPDF(string id)
+        public ActionResult DocumentoRegSanitarioPDF(string id, string itemCode = "")
         {
             var uti = new Utilitarios();
-            var regsanitarios = new RegistrosSanitarios_N().BuscarRegSanitario(id);
+
+            bool esDisfar = itemCode == "PORT0410" || itemCode == "PORT0414";
+
+            var regsanitarios = new RegistrosSanitarios_N().BuscarRegSanitario(id, esDisfar);
             if (regsanitarios == null || string.IsNullOrEmpty(regsanitarios.RutaArchivo))
                 return Content("No se encontró el archivo.");
 
-            string rutaFisica = Path.Combine(uti.directorioFileServer.TrimEnd('/', '\\'), regsanitarios.Ruta);
+            var directorio = esDisfar ? uti.directorioFileServer_DISFAR : uti.directorioFileServer;
+            string rutaFisica = Path.Combine(directorio.TrimEnd('/', '\\'), regsanitarios.Ruta);
 
             if (!System.IO.File.Exists(rutaFisica))
                 return Content("No se encontró el archivo.");
@@ -312,15 +320,20 @@ namespace Capa_Usuario.Controllers
         public ActionResult DocumentoEspTecnicaPDF(string id)
         {
             var uti = new Utilitarios();
-            var protocolo = new EspecificacionesTecnicas_N().BuscarEspTecnica(id);
+
+            bool esDisfar = id == "PORT0410" || id == "PORT0414";
+
+            var protocolo = new EspecificacionesTecnicas_N().BuscarEspTecnica(id, esDisfar);
 
             if (protocolo == null || string.IsNullOrEmpty(protocolo.RutaArchivo))
             {
                 return new HttpStatusCodeResult(404, "PDF no encontrado");
             }
 
+            var directorio = esDisfar ? uti.directorioFileServer_DISFAR : uti.directorioFileServer;
+
             string rutaFisica = Path.Combine(
-                uti.directorioFileServer.TrimEnd('/', '\\'),
+               directorio.TrimEnd('/', '\\'),
                 protocolo.RutaArchivo   // ⚠️ MISMA PROPIEDAD
             );
 
@@ -447,8 +460,10 @@ namespace Capa_Usuario.Controllers
             {
                 var protocolosN = new Protocolos_N();
 
+                bool esDisfar = itemCode == "PORT0410" || itemCode == "PORT0414";
+
                 // 1. Buscar el protocolo en BD para obtener la ruta
-                var protocolo = protocolosN.BuscarProtocolo(itemCode, distNumber);
+                var protocolo = protocolosN.BuscarProtocolo(itemCode, distNumber, esDisfar);
 
                 if (protocolo != null && !string.IsNullOrWhiteSpace(protocolo.RutaArchivo))
                 {
@@ -462,7 +477,7 @@ namespace Capa_Usuario.Controllers
                 }
 
                 // 2. Eliminar el registro en la BD
-                protocolosN.EliminarProtocolo(itemCode, distNumber);
+                protocolosN.EliminarProtocolo(itemCode, distNumber, esDisfar);
 
                 return Json(new { success = true, message = "Protocolo y archivo eliminados correctamente." });
             }
@@ -473,14 +488,16 @@ namespace Capa_Usuario.Controllers
         }
 
         [HttpPost]
-        public JsonResult EliminarRegSanitarioAjax(string MnfSerial)
+        public JsonResult EliminarRegSanitarioAjax(string MnfSerial, string itemCode ="")
         {
             try
             {
+                bool esDisfar = itemCode == "PORT0410" || itemCode == "PORT0414";
+
                 var registrosN = new RegistrosSanitarios_N();
 
                 // 1. Buscar registro para obtener la ruta del archivo
-                var registro = registrosN.BuscarRegSanitario(MnfSerial); // Este método debe retornar la entidad con RutaArchivo
+                var registro = registrosN.BuscarRegSanitario(MnfSerial, esDisfar); // Este método debe retornar la entidad con RutaArchivo
 
                 if (registro != null && !string.IsNullOrWhiteSpace(registro.RutaArchivo))
                 {
@@ -493,7 +510,7 @@ namespace Capa_Usuario.Controllers
                 }
 
                 // 2. Eliminar el registro en la BD
-                var resultado = registrosN.EliminarRegSanitario(MnfSerial);
+                var resultado = registrosN.EliminarRegSanitario(MnfSerial, esDisfar);
 
                 return Json(new
                 {
@@ -517,10 +534,12 @@ namespace Capa_Usuario.Controllers
         {
             try
             {
+                bool esDisfar = ItemCode == "PORT0410" || ItemCode == "PORT0414";
+
                 var espN = new EspecificacionesTecnicas_N();
 
                 // 1. Buscar la especificación para obtener la ruta del archivo
-                var esp = espN.BuscarEspTecnica(ItemCode); // Este método debe retornar la entidad con RutaArchivo
+                var esp = espN.BuscarEspTecnica(ItemCode, esDisfar); // Este método debe retornar la entidad con RutaArchivo
 
                 if (esp != null && !string.IsNullOrWhiteSpace(esp.RutaArchivo))
                 {
@@ -533,7 +552,7 @@ namespace Capa_Usuario.Controllers
                 }
 
                 // 2. Eliminar el registro en la BD
-                var resultado = espN.EliminarEspTecnicas(ItemCode);
+                var resultado = espN.EliminarEspTecnicas(ItemCode, esDisfar);
 
                 return Json(new
                 {

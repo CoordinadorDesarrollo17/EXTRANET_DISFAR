@@ -26,37 +26,108 @@ namespace Capa_Datos.Inventario_DAO.TablasSql
                 {
                     var sb = new StringBuilder();
 
+                    //sb.AppendLine(@"
+                    //            SELECT TOP 100
+                    //                x.ItemCode,
+                    //                pr.ItemName,
+                    //                x.Ruta,
+                    //                x.Nombre,
+                    //                x.OpCarga,
+                    //                x.TiempoCarga
+                    //            FROM (
+                    //                SELECT
+                    //                    e.ItemCode,
+                    //                    e.Ruta,
+                    //                    e.Nombre,
+                    //                    e.OpCarga,
+                    //                    e.TiempoCarga,
+                    //                    ROW_NUMBER() OVER (
+                    //                        PARTITION BY e.ItemCode
+                    //                        ORDER BY e.TiempoCarga DESC
+                    //                    ) AS rn
+                    //                FROM EspecificacionesTecnicas e
+                    //            ) x
+                    //            LEFT JOIN Productos pr ON pr.ItemCode = x.ItemCode
+                    //            WHERE x.rn = 1
+                    //        ");
+
                     sb.AppendLine(@"
-                                SELECT TOP 100
-                                    x.ItemCode,
-                                    pr.ItemName,
-                                    x.Ruta,
-                                    x.Nombre,
-                                    x.OpCarga,
-                                    x.TiempoCarga
-                                FROM (
-                                    SELECT
-                                        e.ItemCode,
-                                        e.Ruta,
-                                        e.Nombre,
-                                        e.OpCarga,
-                                        e.TiempoCarga,
-                                        ROW_NUMBER() OVER (
-                                            PARTITION BY e.ItemCode
-                                            ORDER BY e.TiempoCarga DESC
-                                        ) AS rn
-                                    FROM EspecificacionesTecnicas e
-                                ) x
-                                LEFT JOIN Productos pr ON pr.ItemCode = x.ItemCode
-                                WHERE x.rn = 1
-                            ");
+                        SELECT TOP 100
+                            t.ItemCode,
+                            t.ItemName,
+                            t.Ruta,
+                            t.Nombre,
+                            t.OpCarga,
+                            t.TiempoCarga
+                        FROM
+                        (
+                            --------------------------------------------------------------------
+                            -- DOCUMENTOS_REGULATORIOS
+                            --------------------------------------------------------------------
+                            SELECT
+                                x.ItemCode,
+                                pr.ItemName,
+                                x.Ruta,
+                                x.Nombre,
+                                x.OpCarga,
+                                x.TiempoCarga
+                            FROM (
+                                SELECT
+                                    e.ItemCode,
+                                    e.Ruta,
+                                    e.Nombre,
+                                    e.OpCarga,
+                                    e.TiempoCarga,
+                                    ROW_NUMBER() OVER (
+                                        PARTITION BY e.ItemCode
+                                        ORDER BY e.TiempoCarga DESC
+                                    ) AS rn
+                                FROM DOCUMENTOS_REGULATORIOS.dbo.EspecificacionesTecnicas e
+                            ) x
+                            LEFT JOIN DOCUMENTOS_REGULATORIOS.dbo.Productos pr
+                                ON pr.ItemCode = x.ItemCode
+                            WHERE x.rn = 1
+                              AND x.ItemCode NOT IN ('PORT0410','PORT0414')
+
+                            UNION ALL
+
+                            --------------------------------------------------------------------
+                            -- DOCUMENTOS_REGULATORIOS_DISFAR
+                            --------------------------------------------------------------------
+                            SELECT
+                                x.ItemCode,
+                                pr.ItemName,
+                                x.Ruta,
+                                x.Nombre,
+                                x.OpCarga,
+                                x.TiempoCarga
+                            FROM (
+                                SELECT
+                                    e.ItemCode,
+                                    e.Ruta,
+                                    e.Nombre,
+                                    e.OpCarga,
+                                    e.TiempoCarga,
+                                    ROW_NUMBER() OVER (
+                                        PARTITION BY e.ItemCode
+                                        ORDER BY e.TiempoCarga DESC
+                                    ) AS rn
+                                FROM DOCUMENTOS_REGULATORIOS_DISFAR.dbo.EspecificacionesTecnicas e
+                            ) x
+                            LEFT JOIN DOCUMENTOS_REGULATORIOS_DISFAR.dbo.Productos pr
+                                ON pr.ItemCode = x.ItemCode
+                            WHERE x.rn = 1
+                              AND x.ItemCode IN ('PORT0410','PORT0414')
+                        ) t
+                        WHERE 1 = 1
+                    ");
 
                     if (!string.IsNullOrWhiteSpace(condicion))
                     {
                         sb.AppendLine(condicion);
                     }
 
-                    sb.AppendLine("ORDER BY x.TiempoCarga DESC");
+                    sb.AppendLine("ORDER BY t.TiempoCarga DESC");
 
                     cmd.CommandText = sb.ToString();
                     cmd.CommandType = CommandType.Text;
@@ -89,8 +160,16 @@ namespace Capa_Datos.Inventario_DAO.TablasSql
 
                             if (!string.IsNullOrWhiteSpace(esp.Ruta))
                             {
+                                var itemCodesOtroDirectorio = new[] { "PORT0410", "PORT0414" };
+
+                                var directorio = itemCodesOtroDirectorio.Contains(
+                                    esp.ItemCode?.Trim(),
+                                    StringComparer.OrdinalIgnoreCase)
+                                    ? uti.directorioFileServer_DISFAR
+                                    : uti.directorioFileServer;
+
                                 var rutaFisica = Path.Combine(
-                                    uti.directorioFileServer.TrimEnd('/', '\\'),
+                                    directorio.TrimEnd('/', '\\'),
                                     esp.Ruta
                                 );
 
@@ -120,8 +199,8 @@ namespace Capa_Datos.Inventario_DAO.TablasSql
         {
             int status = -1;
             string query = "";
-            string rutaDirectorio = Path.Combine(uti.directorioFileServer.TrimEnd('/', '\\'), obj.ItemCode);
-            if (BuscarEspTecnica(obj.ItemCode) == null)
+            string rutaDirectorio = Path.Combine(uti.directorioFileServer_DISFAR.TrimEnd('/', '\\'), obj.ItemCode);
+            if (BuscarEspTecnica(obj.ItemCode,true) == null)
             {
                 query = "insert into EspecificacionesTecnicas values(@ItemCode,@Ruta,@Nombre,@OpCarga,@TiempoCarga);";
             }
@@ -130,7 +209,7 @@ namespace Capa_Datos.Inventario_DAO.TablasSql
                 query = "update EspecificacionesTecnicas set Ruta=@Ruta,Nombre=@Nombre,OpCarga=@OpCarga,TiempoCarga=@TiempoCarga where ItemCode=@ItemCode;";
             } 
             obj.Ruta = Path.Combine(obj.ItemCode, obj.Nombre + ".pdf");
-            SqlConnection cn = new SqlConnection(uti.cadSql);
+            SqlConnection cn = new SqlConnection(uti.cadSql_DISFAR);
             try
             {
                 cn.Open();
@@ -141,11 +220,11 @@ namespace Capa_Datos.Inventario_DAO.TablasSql
                     string condicion = " AND ItemCode = @ItemCode";
                     var parametros = new Dictionary<string, object> { { "@ItemCode", obj.ItemCode } };
 
-                    var resultadoProductos = datosProd.ObtenerProductos(condicion, parametros);
+                    var resultadoProductos = datosProd.ObtenerProductos(condicion, parametros,true);
                     var producto = resultadoProductos.Item2.DefaultIfEmpty(new Productos_E()).First();
 
                     if (producto == null || string.IsNullOrEmpty(producto.ItemName))
-                        datosProd.AgregarArticulo(new Productos_E() { ItemCode = obj.ItemCode, ItemName = obj.ItemName, FirmCode = obj.FirmCode });
+                        datosProd.AgregarArticulo(new Productos_E() { ItemCode = obj.ItemCode, ItemName = obj.ItemName, FirmCode = obj.FirmCode },true);
                     SqlCommand cmd = new SqlCommand(query, cn, tran);
                     cmd.CommandType = CommandType.Text;
                     cmd.Parameters.AddWithValue("@ItemCode", obj.ItemCode);
@@ -172,11 +251,11 @@ namespace Capa_Datos.Inventario_DAO.TablasSql
             catch (Exception e2) { cn.Close(); status = 0; throw new Exception("Error en conexion: " + e2.Message); }
             return status;
         }
-        public EspecificacionesTecnicas_E BuscarEspTecnica(string ItemCode)
+        public EspecificacionesTecnicas_E BuscarEspTecnica(string ItemCode, bool esDisfar = false)
         {
             EspecificacionesTecnicas_E et = null;
             string query = "select * from EspecificacionesTecnicas where ItemCode=@ItemCode";
-            SqlConnection cn = db.SqlConexion();
+            SqlConnection cn = esDisfar ? db.SqlConexion_DISFAR() : db.SqlConexion(); // add
             try
             {
                 cn.Open();
@@ -192,7 +271,9 @@ namespace Capa_Datos.Inventario_DAO.TablasSql
                     if (!dr.IsDBNull(2)) et.Nombre = dr.GetString(2);
                     if (!dr.IsDBNull(3)) et.OpCarga = dr.GetString(3);
                     if (!dr.IsDBNull(4)) et.TiempoCarga = dr.GetDateTime(4);
-                    var rutaArchivo = Path.Combine(uti.directorioFileServer.TrimEnd('/', '\\'), et.Ruta);
+
+                    var directorio = esDisfar ? uti.directorioFileServer_DISFAR : uti.directorioFileServer; // add
+                    var rutaArchivo = Path.Combine(directorio.TrimEnd('/', '\\'), et.Ruta);
                     et.RutaArchivo = File.Exists(rutaArchivo) ? rutaArchivo : null;
                     dr.Close();
                 }
@@ -203,14 +284,14 @@ namespace Capa_Datos.Inventario_DAO.TablasSql
             catch { cn.Close(); et = null; }
             return et;
         }
-        public Helper_E EliminarEspTecnicas(string ItemCode)
+        public Helper_E EliminarEspTecnicas(string ItemCode, bool esDisfar = false)
         {
             Helper_E helper = new Helper_E();
 
             try
             {
                 string query = "DELETE FROM EspecificacionesTecnicas WHERE ItemCode = @ItemCode";
-                using (SqlConnection cn = db.SqlConexion())
+                using (SqlConnection cn = esDisfar ? db.SqlConexion_DISFAR() : db.SqlConexion() )
                 {
                     cn.Open();
                     using (SqlCommand cmd = new SqlCommand(query, cn))

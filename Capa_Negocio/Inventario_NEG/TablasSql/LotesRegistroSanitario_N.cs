@@ -21,27 +21,27 @@ namespace Capa_Negocio.Inventario_NEG.TablasSql
             {
                 if (!string.IsNullOrWhiteSpace(filtros.ItemCode))
                 {
-                    condiciones.AppendLine("AND Pr.ItemCode LIKE @ItemCode");
+                    condiciones.AppendLine("AND t.ItemCode LIKE @ItemCode");
                     parametros["@ItemCode"] = $@"%{filtros.ItemCode.Trim()}%";
                 }
                 if (!string.IsNullOrWhiteSpace(filtros.ItemName))
                 {
-                    condiciones.AppendLine("AND Pr.ItemName LIKE @ItemName");
+                    condiciones.AppendLine("AND t.ItemName LIKE @ItemName");
                     parametros["@ItemName"] = $@"%{filtros.ItemName.Trim()}%";
                 }
                 if (!string.IsNullOrWhiteSpace(filtros.ExpDate) && DateTime.TryParse(filtros.ExpDate, out DateTime fecha))
                 {
-                    condiciones.AppendLine("AND CONVERT(date, Lt.ExpDate) = @ExpDate");
+                    condiciones.AppendLine("AND CONVERT(date, t.ExpDate) = @ExpDate");
                     parametros["@ExpDate"] = fecha.Date;
                 }
                 if (!string.IsNullOrWhiteSpace(filtros.DistNumber))
                 {
-                    condiciones.AppendLine("AND Lt.DistNumber LIKE @DistNumber");
+                    condiciones.AppendLine("AND t.DistNumber LIKE @DistNumber");
                     parametros["@DistNumber"] = $@"%{filtros.DistNumber.Trim()}%";
                 }
                 if (!string.IsNullOrWhiteSpace(filtros.MnfSerial))
                 {
-                    condiciones.AppendLine("AND Lt.MnfSerial LIKE @MnfSerial");
+                    condiciones.AppendLine("AND t.MnfSerial LIKE @MnfSerial");
                     parametros["@MnfSerial"] = $@"%{filtros.MnfSerial.Trim()}%";
                 }
             }

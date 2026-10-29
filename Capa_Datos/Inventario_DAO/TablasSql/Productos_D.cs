@@ -11,12 +11,12 @@ namespace Capa_Datos.Inventario_DAO.TablasSql
     {
         DBHelper db = new DBHelper();
         private Utilitarios uti = new Utilitarios();
-        public void AgregarArticulo(Productos_E obj)
+        public void AgregarArticulo(Productos_E obj, bool esDisfar = false)
         {
             string query = "INSERT INTO Productos VALUES (@ItemCode,@ItemName,@FirmCode, @EstadoSKU)";
             try
             {
-                db.MysqlExecuteNonQueryTrxNoSp(query, new List<string>() { "@ItemCode", "@ItemName", "@FirmCode", "@EstadoSKU" }
+                db.MysqlExecuteNonQueryTrxNoSp(query, new List<string>() { "@ItemCode", "@ItemName", "@FirmCode", "@EstadoSKU" } , esDisfar
                     , obj.ItemCode, obj.ItemName, obj.FirmCode, "01");
             }
             catch (Exception ex)
@@ -25,7 +25,7 @@ namespace Capa_Datos.Inventario_DAO.TablasSql
                 throw; // Propagar excepción para manejarla en niveles superiores
             }
         }
-        public (Helper_E, List<Productos_E>) ObtenerProductos(string condicion, Dictionary<string, object> parametros)
+        public (Helper_E, List<Productos_E>) ObtenerProductos(string condicion, Dictionary<string, object> parametros,bool esDisfar = false)
         {
             var lista = new List<Productos_E>();
             Helper_E _helper = new Helper_E();
@@ -35,7 +35,7 @@ namespace Capa_Datos.Inventario_DAO.TablasSql
 
             try
             {
-                using (SqlConnection cnx = new SqlConnection(uti.cadSql))
+                using (SqlConnection cnx = new SqlConnection(esDisfar ? uti.cadSql_DISFAR : uti.cadSql))
                 {
                     cnx.Open();
                     using (SqlCommand cmd = new SqlCommand(query, cnx))

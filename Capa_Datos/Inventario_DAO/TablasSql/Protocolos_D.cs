@@ -26,8 +26,45 @@ namespace Capa_Datos.Inventario_DAO.TablasSql
                 {
                     var sb = new StringBuilder();
 
+                    //sb.AppendLine(@"
+                    //        SELECT TOP 100
+                    //            x.ItemCode,
+                    //            pr.ItemName,
+                    //            x.DistNumber,
+                    //            x.Ruta,
+                    //            x.OpCarga,
+                    //            x.TiempoCarga
+                    //        FROM (
+                    //            SELECT 
+                    //                p.ItemCode,
+                    //                p.DistNumber,
+                    //                p.Ruta,
+                    //                p.OpCarga,
+                    //                p.TiempoCarga,
+                    //                ROW_NUMBER() OVER (
+                    //                    PARTITION BY p.ItemCode, p.DistNumber
+                    //                    ORDER BY p.TiempoCarga DESC
+                    //                ) AS rn
+                    //            FROM Protocolos p
+                    //        ) x
+                    //        LEFT JOIN Productos pr ON pr.ItemCode = x.ItemCode
+                    //        WHERE x.rn = 1
+                    //    ");
+
                     sb.AppendLine(@"
-                            SELECT TOP 100
+                        SELECT TOP 100
+                            t.ItemCode,
+                            t.ItemName,
+                            t.DistNumber,
+                            t.Ruta,
+                            t.OpCarga,
+                            t.TiempoCarga
+                        FROM
+                        (
+                            --------------------------------------------------------------------
+                            -- DOCUMENTOS_REGULATORIOS
+                            --------------------------------------------------------------------
+                            SELECT
                                 x.ItemCode,
                                 pr.ItemName,
                                 x.DistNumber,
@@ -35,7 +72,7 @@ namespace Capa_Datos.Inventario_DAO.TablasSql
                                 x.OpCarga,
                                 x.TiempoCarga
                             FROM (
-                                SELECT 
+                                SELECT
                                     p.ItemCode,
                                     p.DistNumber,
                                     p.Ruta,
@@ -45,18 +82,53 @@ namespace Capa_Datos.Inventario_DAO.TablasSql
                                         PARTITION BY p.ItemCode, p.DistNumber
                                         ORDER BY p.TiempoCarga DESC
                                     ) AS rn
-                                FROM Protocolos p
+                                FROM DOCUMENTOS_REGULATORIOS.dbo.Protocolos p
                             ) x
-                            LEFT JOIN Productos pr ON pr.ItemCode = x.ItemCode
+                            LEFT JOIN DOCUMENTOS_REGULATORIOS.dbo.Productos pr
+                                ON pr.ItemCode = x.ItemCode
                             WHERE x.rn = 1
-                        ");
+                              AND x.ItemCode NOT IN ('PORT0410','PORT0414')
+
+                            UNION ALL
+
+                            --------------------------------------------------------------------
+                            -- DOCUMENTOS_REGULATORIOS_DISFAR
+                            --------------------------------------------------------------------
+                            SELECT
+                                x.ItemCode,
+                                pr.ItemName,
+                                x.DistNumber,
+                                x.Ruta,
+                                x.OpCarga,
+                                x.TiempoCarga
+                            FROM (
+                                SELECT
+                                    p.ItemCode,
+                                    p.DistNumber,
+                                    p.Ruta,
+                                    p.OpCarga,
+                                    p.TiempoCarga,
+                                    ROW_NUMBER() OVER (
+                                        PARTITION BY p.ItemCode, p.DistNumber
+                                        ORDER BY p.TiempoCarga DESC
+                                    ) AS rn
+                                FROM DOCUMENTOS_REGULATORIOS_DISFAR.dbo.Protocolos p
+                            ) x
+                            LEFT JOIN DOCUMENTOS_REGULATORIOS_DISFAR.dbo.Productos pr
+                                ON pr.ItemCode = x.ItemCode
+                            WHERE x.rn = 1
+                              AND x.ItemCode IN ('PORT0410','PORT0414')
+                        ) t
+                        WHERE 1 = 1
+                    ");
+
 
                     if (!string.IsNullOrWhiteSpace(condicion))
                     {
                         sb.AppendLine(condicion);
                     }
 
-                    sb.AppendLine("ORDER BY x.TiempoCarga DESC");
+                    sb.AppendLine("ORDER BY t.TiempoCarga DESC");
 
                     cmd.CommandText = sb.ToString();
                     cmd.CommandType = CommandType.Text;
@@ -115,8 +187,16 @@ namespace Capa_Datos.Inventario_DAO.TablasSql
                             // Validación física del archivo
                             if (!string.IsNullOrWhiteSpace(protocolo.Ruta))
                             {
+                                var itemCodesOtroDirectorio = new[] { "PORT0410", "PORT0414" };
+
+                                var directorio = itemCodesOtroDirectorio.Contains(
+                                    protocolo.ItemCode?.Trim(),
+                                    StringComparer.OrdinalIgnoreCase)
+                                    ? uti.directorioFileServer_DISFAR 
+                                    : uti.directorioFileServer;
+
                                 var rutaFisica = Path.Combine(
-                                    uti.directorioFileServer.TrimEnd('/', '\\'),
+                                    directorio.TrimEnd('/', '\\'),
                                     protocolo.Ruta
                                 );
 
@@ -146,13 +226,13 @@ namespace Capa_Datos.Inventario_DAO.TablasSql
         public int AgregarProtocolo(Protocolos_E obj)
         {
             int status = -1;
-            string rutaDirectorio = Path.Combine(uti.directorioFileServer.TrimEnd('/', '\\'), obj.ItemCode);
-            bool protocoloExiste = BuscarProtocolo(obj.ItemCode, obj.DistNumber) != null;
+            string rutaDirectorio = Path.Combine(uti.directorioFileServer_DISFAR.TrimEnd('/', '\\'), obj.ItemCode); // add
+            bool protocoloExiste = BuscarProtocolo(obj.ItemCode, obj.DistNumber, true) != null; //add
             var query = protocoloExiste
                 ? "UPDATE Protocolos SET Ruta=@Ruta, OpCarga=@OpCarga, TiempoCarga=@TiempoCarga WHERE ItemCode=@ItemCode AND DistNumber=@DistNumber;"
                 : "INSERT INTO Protocolos (ItemCode, DistNumber, Ruta, OpCarga, TiempoCarga) VALUES (@ItemCode, @DistNumber, @Ruta, @OpCarga, @TiempoCarga);";
             obj.Ruta = Path.Combine(obj.ItemCode, obj.DistNumber + ".pdf");
-            SqlConnection cn = new SqlConnection(uti.cadSql);
+            SqlConnection cn = new SqlConnection(uti.cadSql_DISFAR); //add
             try
             {
                 cn.Open();
@@ -163,15 +243,15 @@ namespace Capa_Datos.Inventario_DAO.TablasSql
                     string condicion = " AND ItemCode = @ItemCode";
                     var parametros = new Dictionary<string, object> { { "@ItemCode", obj.ItemCode } };
 
-                    var resultadoProductos = datosProd.ObtenerProductos(condicion, parametros);
+                    var resultadoProductos = datosProd.ObtenerProductos(condicion, parametros , true); //add
                     var producto = resultadoProductos.Item2.DefaultIfEmpty(new Productos_E()).First();
 
                     if (producto == null || string.IsNullOrEmpty(producto.ItemName))
-                        datosProd.AgregarArticulo(new Productos_E() { ItemCode = obj.ItemCode, ItemName = obj.ItemName, FirmCode = obj.FirmCode });
+                        datosProd.AgregarArticulo(new Productos_E() { ItemCode = obj.ItemCode, ItemName = obj.ItemName, FirmCode = obj.FirmCode }, true); //add
                     var datosLotesRS = new LotesRegistroSanitario_D();
-                    var loteRS = datosLotesRS.BuscarLotesRegistroSanitario(obj.ItemCode, obj.DistNumber);
+                    var loteRS = datosLotesRS.BuscarLotesRegistroSanitario(obj.ItemCode, obj.DistNumber, true); //add
                     if (loteRS == null || string.IsNullOrEmpty(loteRS.DistNumber))
-                        datosLotesRS.AgregarLote(new LotesRegistroSanitario_E() { ItemCode = obj.ItemCode, DistNumber = obj.DistNumber, MnfSerial = obj.MnfSerial, ExpDate = obj.ExpDate });
+                        datosLotesRS.AgregarLote(new LotesRegistroSanitario_E() { ItemCode = obj.ItemCode, DistNumber = obj.DistNumber, MnfSerial = obj.MnfSerial, ExpDate = obj.ExpDate }, true); //add
                     if (obj.ArchivoPdf != null)
                     {
                         SqlCommand cmd = new SqlCommand(query, cn, tran);
@@ -196,11 +276,11 @@ namespace Capa_Datos.Inventario_DAO.TablasSql
             catch (Exception e2) { cn.Close(); status = 0; throw new Exception("Error en conexion: " + e2.Message); }
             return status;
         }
-        public Protocolos_E BuscarProtocolo(string ItemCode, string DistNumber)
+        public Protocolos_E BuscarProtocolo(string ItemCode, string DistNumber, bool esDisfar = false)
         {
             Protocolos_E protocolo = null;
             string query = "SELECT ItemCode, DistNumber, Ruta, OpCarga, TiempoCarga FROM Protocolos where ItemCode=@ItemCode and DistNumber=@DistNumber";
-            SqlConnection cn = db.SqlConexion();
+            SqlConnection cn = esDisfar ? db.SqlConexion_DISFAR() : db.SqlConexion(); //add
             try
             {
                 cn.Open();
@@ -217,7 +297,9 @@ namespace Capa_Datos.Inventario_DAO.TablasSql
                     if (!dr.IsDBNull(2)) protocolo.Ruta = dr.GetString(2);
                     if (!dr.IsDBNull(3)) protocolo.OpCarga = dr.GetString(3);
                     if (!dr.IsDBNull(4)) protocolo.TiempoCarga = dr.GetDateTime(4);
-                    var rutaArchivo = Path.Combine(uti.directorioFileServer.TrimEnd('/', '\\'), protocolo.Ruta);
+
+                    var directorio = esDisfar ? uti.directorioFileServer_DISFAR : uti.directorioFileServer;    //add            
+                    var rutaArchivo = Path.Combine(directorio.TrimEnd('/', '\\'), protocolo.Ruta);
                     protocolo.RutaArchivo = File.Exists(rutaArchivo) ? rutaArchivo : null;
                     dr.Close();
                 }
@@ -227,10 +309,10 @@ namespace Capa_Datos.Inventario_DAO.TablasSql
             return protocolo;
         }
 
-        public void EliminarProtocolo(string itemCode, string distNumber)
+        public void EliminarProtocolo(string itemCode, string distNumber, bool esDisfar = false)
         {
             string query = "DELETE FROM Protocolos WHERE ItemCode = @ItemCode AND DistNumber = @DistNumber";
-            using (SqlConnection cn = db.SqlConexion())
+            using (SqlConnection cn = esDisfar ? db.SqlConexion_DISFAR() : db.SqlConexion())
             {
                 cn.Open();
                 SqlCommand cmd = new SqlCommand(query, cn);
@@ -240,7 +322,7 @@ namespace Capa_Datos.Inventario_DAO.TablasSql
             }
 
             // Opcional: Eliminar el archivo del sistema de archivos si existe
-            var protocolo = BuscarProtocolo(itemCode, distNumber);
+            var protocolo = BuscarProtocolo(itemCode, distNumber, esDisfar);
             if (!string.IsNullOrEmpty(protocolo?.RutaArchivo) && File.Exists(protocolo.RutaArchivo))
             {
                 File.Delete(protocolo.RutaArchivo);

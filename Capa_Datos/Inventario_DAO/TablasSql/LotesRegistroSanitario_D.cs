@@ -12,12 +12,12 @@ namespace Capa_Datos.Inventario_DAO.TablasSql
     {
         private readonly Utilitarios uti = new Utilitarios();
         DBHelper db = new DBHelper();
-        public void AgregarLote(LotesRegistroSanitario_E obj)
+        public void AgregarLote(LotesRegistroSanitario_E obj, bool esDisfar = false)
         {
             string query = "insert into LotesRegistroSanitario values(@ItemCode,@DistNumber,@MnfSerial,@ExpDate)";
             try
             {
-                db.MysqlExecuteNonQueryTrxNoSp(query, new List<string>() { "@ItemCode", "@DistNumber", "@MnfSerial", "@ExpDate" }
+                db.MysqlExecuteNonQueryTrxNoSp(query, new List<string>() { "@ItemCode", "@DistNumber", "@MnfSerial", "@ExpDate" } , esDisfar
                     , obj.ItemCode, obj.DistNumber, obj.MnfSerial, obj.ExpDate);
             }
             catch { }
@@ -37,17 +37,66 @@ namespace Capa_Datos.Inventario_DAO.TablasSql
                     cmd.Connection = cn;
 
                     var sb = new StringBuilder();
-                    sb.AppendLine($"SELECT {top} Pr.ItemCode, Pr.ItemName, Lt.DistNumber, Lt.MnfSerial, CONVERT(varchar, Lt.ExpDate, 103)");
-                    sb.AppendLine("FROM Productos Pr");
-                    sb.AppendLine("LEFT JOIN LotesRegistroSanitario Lt ON Lt.ItemCode = Pr.ItemCode");
-                    sb.AppendLine("WHERE 1=1");
 
+                    //sb.AppendLine($"SELECT {top} Pr.ItemCode, Pr.ItemName, Lt.DistNumber, Lt.MnfSerial, CONVERT(varchar, Lt.ExpDate, 103)");
+                    //sb.AppendLine("FROM Productos Pr");
+                    //sb.AppendLine("LEFT JOIN LotesRegistroSanitario Lt ON Lt.ItemCode = Pr.ItemCode");
+                    //sb.AppendLine("WHERE 1=1");
+
+                    //if (!string.IsNullOrWhiteSpace(condicion))
+                    //{
+                    //    sb.AppendLine(condicion.Trim());
+                    //}
+
+                    //sb.AppendLine("ORDER BY Pr.ItemCode");
+
+                    //////////////////////////////////////////////////////////////77
+                    sb.AppendLine("WITH ProductosConLotes AS");
+                    sb.AppendLine("(");
+
+                    // BD1: todos los productos excepto los dos indicados.
+                    sb.AppendLine("    SELECT");
+                    sb.AppendLine("        Pr.ItemCode,");
+                    sb.AppendLine("        Pr.ItemName,");
+                    sb.AppendLine("        Lt.DistNumber,");
+                    sb.AppendLine("        Lt.MnfSerial,");
+                    sb.AppendLine("        Lt.ExpDate");
+                    sb.AppendLine("    FROM DOCUMENTOS_REGULATORIOS.dbo.Productos Pr");
+                    sb.AppendLine("    LEFT JOIN DOCUMENTOS_REGULATORIOS.dbo.LotesRegistroSanitario Lt");
+                    sb.AppendLine("        ON Lt.ItemCode = Pr.ItemCode");
+                    sb.AppendLine("    WHERE Pr.ItemCode NOT IN ('PORT0410', 'PORT0414')");
+
+                    sb.AppendLine("    UNION ALL");
+
+                    // BD2: únicamente los dos productos indicados.
+                    sb.AppendLine("    SELECT");
+                    sb.AppendLine("        Pr.ItemCode,");
+                    sb.AppendLine("        Pr.ItemName,");
+                    sb.AppendLine("        Lt.DistNumber,");
+                    sb.AppendLine("        Lt.MnfSerial,");
+                    sb.AppendLine("        Lt.ExpDate");
+                    sb.AppendLine("    FROM DOCUMENTOS_REGULATORIOS_DISFAR.dbo.Productos Pr");
+                    sb.AppendLine("    LEFT JOIN DOCUMENTOS_REGULATORIOS_DISFAR.dbo.LotesRegistroSanitario Lt");
+                    sb.AppendLine("        ON Lt.ItemCode = Pr.ItemCode");
+                    sb.AppendLine("    WHERE Pr.ItemCode IN ('PORT0410', 'PORT0414')");
+
+                    sb.AppendLine(")");
+                    sb.AppendLine($"SELECT {top}");
+                    sb.AppendLine("    t.ItemCode,");
+                    sb.AppendLine("    t.ItemName,");
+                    sb.AppendLine("    t.DistNumber,");
+                    sb.AppendLine("    t.MnfSerial,");
+                    sb.AppendLine("    CONVERT(varchar, t.ExpDate, 103) AS ExpDate");
+                    sb.AppendLine("FROM ProductosConLotes t");
+                    sb.AppendLine("WHERE 1 = 1");
+                    // Aplicar los filtros dinámicos una sola vez.
                     if (!string.IsNullOrWhiteSpace(condicion))
                     {
                         sb.AppendLine(condicion.Trim());
                     }
 
-                    sb.AppendLine("ORDER BY Pr.ItemCode");
+                    sb.AppendLine("ORDER BY t.ItemCode");
+                    //////////////////////////////////////////////////////////////////
 
                     cmd.CommandText = sb.ToString();
 
@@ -76,10 +125,23 @@ namespace Capa_Datos.Inventario_DAO.TablasSql
                             if (!dr.IsDBNull(2)) o.DistNumber = dr.GetString(2);
                             if (!dr.IsDBNull(3)) o.MnfSerial = dr.GetString(3);
                             if (!dr.IsDBNull(4)) o.ExpDate = dr.GetString(4);
-                            o.existeArchivoEt(oeetD.BuscarEspTecnica(o.ItemCode), uti.directorioFileServer);
-                            o.existeArchivoPt(oeptD.BuscarProtocolo(o.ItemCode, o.DistNumber), uti.directorioFileServer);
-                            o.existeArchivoRs(oersD.BuscarRegSanitario(o.MnfSerial), uti.directorioFileServer);
 
+                            if (!string.IsNullOrWhiteSpace(o.ItemCode))
+                            {
+                                if (o.ItemCode == "PORT0410" || o.ItemCode == "PORT0414") 
+                                {
+                                    o.existeArchivoEt(oeetD.BuscarEspTecnica(o.ItemCode, true), uti.directorioFileServer_DISFAR);
+                                    o.existeArchivoPt(oeptD.BuscarProtocolo(o.ItemCode, o.DistNumber , true), uti.directorioFileServer_DISFAR);
+                                    o.existeArchivoRs(oersD.BuscarRegSanitario(o.MnfSerial, true), uti.directorioFileServer_DISFAR);
+                                }
+                                else
+                                {
+                                    o.existeArchivoEt(oeetD.BuscarEspTecnica(o.ItemCode), uti.directorioFileServer);
+                                    o.existeArchivoPt(oeptD.BuscarProtocolo(o.ItemCode, o.DistNumber), uti.directorioFileServer);
+                                    o.existeArchivoRs(oersD.BuscarRegSanitario(o.MnfSerial), uti.directorioFileServer);
+                                }
+                            }
+                 
                             lista.Add(o);
                         }
                     }
@@ -99,11 +161,11 @@ namespace Capa_Datos.Inventario_DAO.TablasSql
         }
 
 
-        public LotesRegistroSanitario_E BuscarLotesRegistroSanitario(string ItemCode, string DistNumber)
+        public LotesRegistroSanitario_E BuscarLotesRegistroSanitario(string ItemCode, string DistNumber, bool esDisfar = false)
         {
             var o = new LotesRegistroSanitario_E();
             string query = "SELECT ItemCode, DistNumber, MnfSerial, CONVERT(varchar, ExpDate, 103) FROM LotesRegistroSanitario WHERE ItemCode=@ItemCode and DistNumber=@DistNumber";
-            SqlConnection cn = db.SqlConexion();
+            SqlConnection cn = esDisfar ? db.SqlConexion_DISFAR() : db.SqlConexion();
             try
             {
                 cn.Open();

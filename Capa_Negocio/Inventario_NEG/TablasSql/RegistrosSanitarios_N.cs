@@ -28,9 +28,9 @@ namespace Capa_Negocio.Inventario_NEG.TablasSql
             o.MnfSerial = o.MnfSerial.Replace("/", " ");
             return _datos.AgregarRegSanitario(o);
         }
-        public RegistrosSanitarios_E BuscarRegSanitario(string MnfSerial)
+        public RegistrosSanitarios_E BuscarRegSanitario(string MnfSerial, bool esDisfar = false)
         {
-            return _datos.BuscarRegSanitario(MnfSerial);
+            return _datos.BuscarRegSanitario(MnfSerial, esDisfar);
         }
 
         public (Helper_E, List<RegistrosSanitarios_E>) ListarRegSanitarios(RegistrosSanitarios_E filtro = null)
@@ -43,27 +43,27 @@ namespace Capa_Negocio.Inventario_NEG.TablasSql
             {
                 if (!string.IsNullOrWhiteSpace(filtro.MnfSerial))
                 {
-                    condiciones.AppendLine("AND x.MnfSerial LIKE @MnfSerial");
+                    condiciones.AppendLine("AND t.MnfSerial LIKE @MnfSerial");
                     parametros["@MnfSerial"] = $@"%{filtro.MnfSerial.Trim()}%";
                 }
 
                 // ✅ NUEVO FILTRO: ItemName (viene de tabla Productos via JOIN)
                 if (!string.IsNullOrWhiteSpace(filtro.ItemName))
                 {
-                    condiciones.AppendLine("AND pr.ItemName LIKE @ItemName");
+                    condiciones.AppendLine("AND t.ItemName LIKE @ItemName");
                     parametros["@ItemName"] = $@"%{filtro.ItemName.Trim()}%";
                 }
 
                 if (!string.IsNullOrWhiteSpace(filtro.OpCarga))
                 {
-                    condiciones.AppendLine("AND x.OpCarga LIKE @OpCarga");
+                    condiciones.AppendLine("AND t.OpCarga LIKE @OpCarga");
                     parametros["@OpCarga"] = $@"%{filtro.OpCarga.Trim()}%";
                 }
 
                 if (filtro.TiempoCarga > DateTime.MinValue)
                 {
                     // 1. Definimos el rango: Desde las 00:00 de hoy hasta las 00:00 de MAÑANA
-                    condiciones.AppendLine("AND x.TiempoCarga >= @FechaInicio AND x.TiempoCarga < @FechaFin");
+                    condiciones.AppendLine("AND t.TiempoCarga >= @FechaInicio AND t.TiempoCarga < @FechaFin");
 
                     // 2. Pasamos los parámetros
                     // @FechaInicio = 25/09/2025 00:00:00
@@ -76,9 +76,9 @@ namespace Capa_Negocio.Inventario_NEG.TablasSql
 
             return _datos.ListarRegSanitarios(condiciones.ToString(), parametros);
         }
-        public Helper_E EliminarRegSanitario(string MnfSerial)
+        public Helper_E EliminarRegSanitario(string MnfSerial, bool esDisfar = false)
         {
-            return new RegistrosSanitarios_D().EliminarRegSanitario(MnfSerial);
+            return new RegistrosSanitarios_D().EliminarRegSanitario(MnfSerial, esDisfar);
         }
 
         public bool VerificarSerialExistente(string mnfserial)

@@ -26,9 +26,9 @@ namespace Capa_Negocio.Inventario_NEG.TablasSql
             if (string.IsNullOrWhiteSpace(o.ExpDate)) { throw new Exception("Debe llenar fecha de vencimiento"); }
             return _datos.AgregarProtocolo(o);
         }
-        public Protocolos_E BuscarProtocolo(string ItemCode, string DistNumber)
+        public Protocolos_E BuscarProtocolo(string ItemCode, string DistNumber, bool esDisfar = false)
         {
-            return _datos.BuscarProtocolo(ItemCode, DistNumber);
+            return _datos.BuscarProtocolo(ItemCode, DistNumber, esDisfar);
         }
 
         public (Helper_E, List<Protocolos_E>) ListarProtocolos(Protocolos_E filtro = null)
@@ -42,7 +42,7 @@ namespace Capa_Negocio.Inventario_NEG.TablasSql
                 // CORRECCIÓN AQUÍ: Agregamos "x." antes de ItemCode
                 if (!string.IsNullOrWhiteSpace(filtro.ItemCode))
                 {
-                    condiciones.AppendLine("AND x.ItemCode LIKE @ItemCode");
+                    condiciones.AppendLine("AND t.ItemCode LIKE @ItemCode");
                     // CUIDADO: Asegúrate que SanitizarTexto no borre guiones (-) o puntos si tus códigos los tienen
                     parametros["@ItemCode"] = $@"%{filtro.ItemCode.Trim()}%";
                 }
@@ -51,37 +51,37 @@ namespace Capa_Negocio.Inventario_NEG.TablasSql
                 // Viendo tu Query, ItemName viene de 'pr', así que usa pr.ItemName
                 if (!string.IsNullOrWhiteSpace(filtro.ItemName))
                 {
-                    condiciones.AppendLine("AND pr.ItemName LIKE @ItemName");
+                    condiciones.AppendLine("AND t.ItemName LIKE @ItemName");
                     parametros["@ItemName"] = $@"%{filtro.ItemName.Trim()}%";
                 }
 
                 // CORRECCIÓN AQUÍ: Agregamos "x."
                 if (!string.IsNullOrWhiteSpace(filtro.DistNumber))
                 {
-                    condiciones.AppendLine("AND x.DistNumber LIKE @DistNumber");
+                    condiciones.AppendLine("AND t.DistNumber LIKE @DistNumber");
                     parametros["@DistNumber"] = $@"%{filtro.DistNumber.Trim()}%";
                 }
 
                 // CORRECCIÓN AQUÍ: Agregamos "x."
                 if (!string.IsNullOrWhiteSpace(filtro.OpCarga))
                 {
-                    condiciones.AppendLine("AND x.OpCarga LIKE @OpCarga");
+                    condiciones.AppendLine("AND t.OpCarga LIKE @OpCarga");
                     parametros["@OpCarga"] = $@"%{filtro.OpCarga.Trim()}%";
                 }
 
                 // CORRECCIÓN AQUÍ: Agregamos "x."
                 if (filtro.TiempoCarga > DateTime.MinValue)
                 {
-                    condiciones.AppendLine("AND CONVERT(date, x.TiempoCarga) = @TiempoCarga");
+                    condiciones.AppendLine("AND CONVERT(date, t.TiempoCarga) = @TiempoCarga");
                     parametros["@TiempoCarga"] = filtro.TiempoCarga.Date;
                 }
             }
 
             return _datos.ListarProtocolos(condiciones.ToString(), parametros);
         }
-        public void EliminarProtocolo(string itemCode, string distNumber)
+        public void EliminarProtocolo(string itemCode, string distNumber, bool esDisfar = false)
         {
-            new Protocolos_D().EliminarProtocolo(itemCode, distNumber);
+            new Protocolos_D().EliminarProtocolo(itemCode, distNumber, esDisfar);
         }
 
         public bool VerificarLoteExistente(string itemCode, string lote)
