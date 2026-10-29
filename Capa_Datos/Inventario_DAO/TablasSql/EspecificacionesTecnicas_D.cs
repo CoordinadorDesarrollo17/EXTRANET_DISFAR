@@ -51,7 +51,7 @@ namespace Capa_Datos.Inventario_DAO.TablasSql
                     //            WHERE x.rn = 1
                     //        ");
 
-                    sb.AppendLine(@"
+                    sb.AppendLine($@"
                         SELECT TOP 100
                             t.ItemCode,
                             t.ItemName,
@@ -82,9 +82,9 @@ namespace Capa_Datos.Inventario_DAO.TablasSql
                                         PARTITION BY e.ItemCode
                                         ORDER BY e.TiempoCarga DESC
                                     ) AS rn
-                                FROM DOCUMENTOS_REGULATORIOS.dbo.EspecificacionesTecnicas e
+                                FROM {uti.BaseDatosCobefar}EspecificacionesTecnicas e
                             ) x
-                            LEFT JOIN DOCUMENTOS_REGULATORIOS.dbo.Productos pr
+                            LEFT JOIN {uti.BaseDatosCobefar}Productos pr
                                 ON pr.ItemCode = x.ItemCode
                             WHERE x.rn = 1
                               AND x.ItemCode NOT IN ('PORT0410','PORT0414')
@@ -112,9 +112,9 @@ namespace Capa_Datos.Inventario_DAO.TablasSql
                                         PARTITION BY e.ItemCode
                                         ORDER BY e.TiempoCarga DESC
                                     ) AS rn
-                                FROM DOCUMENTOS_REGULATORIOS_DISFAR.dbo.EspecificacionesTecnicas e
+                                FROM {uti.BaseDatosDisfar}EspecificacionesTecnicas e
                             ) x
-                            LEFT JOIN DOCUMENTOS_REGULATORIOS_DISFAR.dbo.Productos pr
+                            LEFT JOIN {uti.BaseDatosDisfar}Productos pr
                                 ON pr.ItemCode = x.ItemCode
                             WHERE x.rn = 1
                               AND x.ItemCode IN ('PORT0410','PORT0414')

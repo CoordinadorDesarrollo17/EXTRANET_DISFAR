@@ -225,13 +225,16 @@ namespace Capa_Usuario.Controllers
         }
 
         //metodos
-        public FileResult DocumentoRegSanit(string id, int idOperacion = 15)
+        public FileResult DocumentoRegSanit(string id, string itemCode ="", int idOperacion = 15)
         {
             string acceso = Helpers.VerificacionAccesos(this, idOperacion);
             if (acceso == "C_Access")
             {
                 var user = (Usuario_E)Session["Usuario"];
-                var registroSanitario = new RegistrosSanitarios_N().BuscarRegSanitario(id);
+
+                bool esDisfar = itemCode == "PORT0410" || itemCode == "PORT0414";
+
+                var registroSanitario = new RegistrosSanitarios_N().BuscarRegSanitario(id, esDisfar);
                 if (registroSanitario == null || string.IsNullOrEmpty(registroSanitario.RutaArchivo))
                     return null;
                 string contentType = MimeMapping.GetMimeMapping(registroSanitario.RutaArchivo); // Obtiene el tipo MIME
@@ -246,10 +249,13 @@ namespace Capa_Usuario.Controllers
             if (acceso == "C_Access")
             {
                 var user = Session["Usuario"] as Usuario_E;
+
+                bool esDisfar = id == "PORT0410" || id == "PORT0414";
+
                 bool caracterEspecial = id.Contains("ampersand");
                 if (caracterEspecial)
                     id = id.Replace("ampersand", "&");
-                var especificacionTecnica = new Capa_Negocio.Inventario_NEG.TablasMysql.EspecificacionesTecnicas_N().BuscarEspTecnica(id);
+                var especificacionTecnica = new Capa_Negocio.Inventario_NEG.TablasMysql.EspecificacionesTecnicas_N().BuscarEspTecnica(id, esDisfar);
                 if (especificacionTecnica == null || string.IsNullOrEmpty(especificacionTecnica.RutaArchivo))
                     return null;
                 string contentType = MimeMapping.GetMimeMapping(especificacionTecnica.RutaArchivo); // Obtiene el tipo MIME
@@ -264,10 +270,13 @@ namespace Capa_Usuario.Controllers
             if (acceso == "C_Access")
             {
                 var user = (Usuario_E)Session["Usuario"];
+
+                bool esDisfar = id == "PORT0410" || id == "PORT0414"; //el id es el itemcode
+
                 bool caracterEspecial = id.Contains("ampersand");
                 if (caracterEspecial)
                     id = id.Replace("ampersand", "&");
-                var protocolo = new Protocolos_N().BuscarProtocolo(id, Lote);
+                var protocolo = new Protocolos_N().BuscarProtocolo(id, Lote,esDisfar);
                 if (protocolo == null || string.IsNullOrEmpty(protocolo.RutaArchivo))
                     return null;
                 string contentType = MimeMapping.GetMimeMapping(protocolo.RutaArchivo); // Obtiene el tipo MIME

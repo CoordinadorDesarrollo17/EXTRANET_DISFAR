@@ -163,7 +163,7 @@ namespace Capa_Datos.Inventario_DAO.TablasSql
                     //  ) y ON y.MnfSerial = x.MnfSerial AND y.rn_lote = 1
                     //  WHERE x.rn = 1 ");
 
-                    sb.AppendLine(@"
+                    sb.AppendLine($@"
                         SELECT TOP 100
                             t.MnfSerial,
                             t.Ruta,
@@ -193,7 +193,7 @@ namespace Capa_Datos.Inventario_DAO.TablasSql
                                         PARTITION BY rs.MnfSerial
                                         ORDER BY rs.TiempoCarga DESC
                                     ) AS rn
-                                FROM DOCUMENTOS_REGULATORIOS.dbo.RegistrosSanitarios rs
+                                FROM {uti.BaseDatosCobefar}RegistrosSanitarios rs
                             ) x
                             LEFT JOIN (
                                 SELECT
@@ -204,8 +204,8 @@ namespace Capa_Datos.Inventario_DAO.TablasSql
                                         PARTITION BY lrs.MnfSerial
                                         ORDER BY lrs.ItemCode
                                     ) AS rn_lote
-                                FROM DOCUMENTOS_REGULATORIOS.dbo.LotesRegistroSanitario lrs
-                                LEFT JOIN DOCUMENTOS_REGULATORIOS.dbo.Productos pr
+                                FROM {uti.BaseDatosCobefar}LotesRegistroSanitario lrs
+                                LEFT JOIN {uti.BaseDatosCobefar}Productos pr
                                     ON pr.ItemCode = lrs.ItemCode
                             ) y
                                 ON y.MnfSerial = x.MnfSerial
@@ -235,7 +235,7 @@ namespace Capa_Datos.Inventario_DAO.TablasSql
                                         PARTITION BY rs.MnfSerial
                                         ORDER BY rs.TiempoCarga DESC
                                     ) AS rn
-                                FROM DOCUMENTOS_REGULATORIOS_DISFAR.dbo.RegistrosSanitarios rs
+                                FROM {uti.BaseDatosDisfar}RegistrosSanitarios rs
                             ) x
                             LEFT JOIN (
                                 SELECT
@@ -246,8 +246,8 @@ namespace Capa_Datos.Inventario_DAO.TablasSql
                                         PARTITION BY lrs.MnfSerial
                                         ORDER BY lrs.ItemCode
                                     ) AS rn_lote
-                                FROM DOCUMENTOS_REGULATORIOS_DISFAR.dbo.LotesRegistroSanitario lrs
-                                LEFT JOIN DOCUMENTOS_REGULATORIOS_DISFAR.dbo.Productos pr
+                                FROM {uti.BaseDatosDisfar}LotesRegistroSanitario lrs
+                                LEFT JOIN {uti.BaseDatosDisfar}Productos pr
                                     ON pr.ItemCode = lrs.ItemCode
                             ) y
                                 ON y.MnfSerial = x.MnfSerial

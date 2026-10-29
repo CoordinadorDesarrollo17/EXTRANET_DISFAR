@@ -61,8 +61,8 @@ namespace Capa_Datos.Inventario_DAO.TablasSql
                     sb.AppendLine("        Lt.DistNumber,");
                     sb.AppendLine("        Lt.MnfSerial,");
                     sb.AppendLine("        Lt.ExpDate");
-                    sb.AppendLine("    FROM DOCUMENTOS_REGULATORIOS.dbo.Productos Pr");
-                    sb.AppendLine("    LEFT JOIN DOCUMENTOS_REGULATORIOS.dbo.LotesRegistroSanitario Lt");
+                    sb.AppendLine($"    FROM {uti.BaseDatosCobefar}Productos Pr");
+                    sb.AppendLine($"    LEFT JOIN {uti.BaseDatosCobefar}LotesRegistroSanitario Lt");
                     sb.AppendLine("        ON Lt.ItemCode = Pr.ItemCode");
                     sb.AppendLine("    WHERE Pr.ItemCode NOT IN ('PORT0410', 'PORT0414')");
 
@@ -75,8 +75,8 @@ namespace Capa_Datos.Inventario_DAO.TablasSql
                     sb.AppendLine("        Lt.DistNumber,");
                     sb.AppendLine("        Lt.MnfSerial,");
                     sb.AppendLine("        Lt.ExpDate");
-                    sb.AppendLine("    FROM DOCUMENTOS_REGULATORIOS_DISFAR.dbo.Productos Pr");
-                    sb.AppendLine("    LEFT JOIN DOCUMENTOS_REGULATORIOS_DISFAR.dbo.LotesRegistroSanitario Lt");
+                    sb.AppendLine($"    FROM {uti.BaseDatosDisfar}Productos Pr");
+                    sb.AppendLine($"    LEFT JOIN {uti.BaseDatosDisfar}LotesRegistroSanitario Lt");
                     sb.AppendLine("        ON Lt.ItemCode = Pr.ItemCode");
                     sb.AppendLine("    WHERE Pr.ItemCode IN ('PORT0410', 'PORT0414')");
 

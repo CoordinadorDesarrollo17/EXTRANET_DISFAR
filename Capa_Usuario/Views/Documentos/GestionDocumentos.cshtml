@@ -117,7 +117,7 @@
                                                 <td class="text-center">
                                                     @if (item.MnfSerial != null && item.ExistRutaRs)
                                                     {
-                                                        <a href="@Url.Action("DocumentoRegSanit", "Documentos", new { id = item.MnfSerial })"
+                                                        <a href="@Url.Action("DocumentoRegSanit", "Documentos", new { id = item.MnfSerial, itemCode = item.ItemCode })"
                                                            target="_blank" class="btn btn-sm btn-outline-primary" title="Descargar R.S.">
                                                             <i class="bi bi-download"></i>
                                                         </a>
